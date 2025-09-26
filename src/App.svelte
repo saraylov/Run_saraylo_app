@@ -1,11 +1,9 @@
-<script context="module">
-  // This runs in module context (once, when the module is first imported)
-  // We can't access window here as it doesn't exist in server-side rendering
-</script>
-
 <script>
-  import { onMount, afterUpdate } from 'svelte';
+  import { onMount } from 'svelte';
   import SplashScreen from './components/SplashScreen.svelte';
+  
+  // Type declaration for Telegram user object
+  /** @typedef {{id: number, first_name: string, last_name?: string, username?: string, photo_url?: string, auth_date: number, hash: string}} TelegramUser */
   
   // State for authentication
   let isAuthenticated = false;
@@ -13,6 +11,8 @@
   
   // Splash screen state
   let showSplash = true;
+  let splashTransitioning = false;
+  let panelAnimationStage = 0; // 0: hidden, 1: appearing, 2: visible
   
   // Bubble animation state
   let bubbles = [];
@@ -20,11 +20,6 @@
   
   // Initialize bubble animation
   onMount(() => {
-    // Hide splash screen after 5 seconds (or when authentication happens)
-    setTimeout(() => {
-      showSplash = false;
-    }, 5000);
-    
     // Start bubble animation
     animateBubbles();
     
@@ -33,8 +28,10 @@
     
     // Add Telegram auth function to window object
     if (typeof window !== 'undefined') {
+      // Define the function that will be called by the Telegram widget
+      /** @param {TelegramUser} telegramUser */
+      // eslint-disable-next-line no-undef
       window.onTelegramAuth = function(telegramUser) {
-        // Call the local function
         handleTelegramAuth(telegramUser);
       };
     }
@@ -49,6 +46,21 @@
       showSplash = false; // Hide splash screen if already authenticated
     }
   });
+  
+  // Handle splash screen transition
+  function handleSplashTransition() {
+    splashTransitioning = true;
+    panelAnimationStage = 1; // Start panel appearing animation
+    
+    // Wait for the fade-out animation to complete before hiding the splash screen
+    setTimeout(() => {
+      showSplash = false;
+      // Start the panel animation sequence with a smoother transition
+      setTimeout(() => {
+        panelAnimationStage = 2; // Panel fully visible
+      }, 50); // Reduced delay for smoother transition
+    }, 1500); // Match the fade-out duration
+  }
   
   // Create bubbles one by one at intervals
   function createBubbleSequentially() {
@@ -116,6 +128,7 @@
   }
   
   // Handle Telegram authentication
+  /** @param {TelegramUser} telegramUser */
   function handleTelegramAuth(telegramUser) {
     console.log('Logged in as', telegramUser);
     user = telegramUser;
@@ -154,7 +167,7 @@
 <main>
   <!-- Show splash screen initially -->
   {#if showSplash}
-    <SplashScreen />
+    <SplashScreen on:splashComplete={handleSplashTransition} />
   {:else}
     <!-- Bubbles background -->
     <div class="bubbles-container">
@@ -170,9 +183,9 @@
     
     {#if !isAuthenticated}
       <!-- Login Page -->
-      <div class="glass-panel login-panel">
+      <div class="glass-panel login-panel {panelAnimationStage === 1 ? 'panel-appearing' : ''} {panelAnimationStage === 2 ? 'panel-visible' : ''}">
         <header class="header">
-          <h1>Vice Run</h1>
+          <h1 class="title-animation">Vice Run</h1>
         </header>
         
         <div class="login-content">
@@ -195,9 +208,9 @@
       </div>
     {:else}
       <!-- Main Application (after login) -->
-      <div class="glass-panel app-panel">
+      <div class="glass-panel app-panel {panelAnimationStage === 1 ? 'panel-appearing' : ''} {panelAnimationStage === 2 ? 'panel-visible' : ''}">
         <header class="header">
-          <h1>Vice Run</h1>
+          <h1 class="title-animation">Vice Run</h1>
           <div class="user-info">
             <span>Привет, {user.first_name}!</span>
             <button class="logout-button" on:click={logout}>Выйти</button>
@@ -279,17 +292,57 @@
     z-index: 10;
   }
   
-  /* Glass panel effect - adjusted transparency */
+  /* Enhanced Glass panel effect - more pronounced bulging effect */
   .glass-panel {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(0.3125rem); /* 5px in rem */
-    -webkit-backdrop-filter: blur(0.3125rem); /* 5px in rem */
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
-    border-radius: 1.25rem; /* 20px in rem */
-    padding: 1.25rem; /* 20px in rem */
-    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1); /* 4px, 16px in rem */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(0.625rem); /* 10px in rem */
+    -webkit-backdrop-filter: blur(0.625rem); /* 10px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.18); /* 1px in rem */
+    border-radius: 1.5rem; /* 24px in rem */
+    padding: 1.5rem; /* 24px in rem */
+    box-shadow: 
+      0 0.5rem 2.5rem rgba(0, 0, 0, 0.25),
+      inset 0 0 1.25rem rgba(255, 255, 255, 0.15),
+      inset 0 -0.125rem 0.25rem rgba(255, 255, 255, 0.1),
+      inset 0 0.125rem 0.25rem rgba(255, 255, 255, 0.15);
     position: relative;
     z-index: 15;
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: blur(10px);
+    /* Bulging effect with multiple box shadows */
+    overflow: hidden;
+  }
+  
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    top: -0.625rem; /* 10px in rem */
+    left: -0.625rem; /* 10px in rem */
+    right: -0.625rem; /* 10px in rem */
+    bottom: -0.625rem; /* 10px in rem */
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.02) 70%,
+      transparent 100%
+    );
+    border-radius: 2rem; /* 32px in rem */
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  .glass-panel.panel-appearing {
+    opacity: 0.3;
+    transform: translateY(25px) scale(0.95);
+    filter: blur(5px);
+  }
+  
+  .glass-panel.panel-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
   
   /* Header */
@@ -305,6 +358,14 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s;
+  }
+  
+  .title-animation {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   /* Login Panel */
@@ -315,29 +376,59 @@
   .login-description {
     font-size: 1rem;
     margin: 1.5rem 0;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+  }
+  
+  .panel-visible .login-description {
     opacity: 0.9;
+    transform: translateY(0);
   }
   
   .telegram-login-container {
     margin: 2rem 0;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s;
+  }
+  
+  .panel-visible .telegram-login-container {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   /* Emulation Button */
   .emulate-auth-button {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
-    border-radius: 0.3125rem; /* 5px in rem */
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    -webkit-backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.25); /* 1px in rem */
+    border-radius: 0.5rem; /* 8px in rem */
     color: white;
-    padding: 0.625rem 1.25rem; /* 10px 20px in rem */
+    padding: 0.75rem 1.5rem; /* 12px 24px in rem */
     cursor: pointer;
     font-size: 1rem; /* 16px in rem */
-    margin-top: 1.25rem; /* 20px in rem */
+    margin-top: 1.5rem; /* 24px in rem */
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+    box-shadow: 
+      0 0.25rem 0.75rem rgba(0, 0, 0, 0.15),
+      inset 0 0.0625rem 0.125rem rgba(255, 255, 255, 0.2);
+  }
+  
+  .panel-visible .emulate-auth-button {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   .emulate-auth-button:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 0.5rem 1rem rgba(0, 0, 0, 0.2),
+      inset 0 0.0625rem 0.1875rem rgba(255, 255, 255, 0.3);
   }
   
   /* App Panel (after login) */
@@ -346,32 +437,62 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 1rem;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+  }
+  
+  .panel-visible .user-info {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   .logout-button {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
-    border-radius: 0.3125rem; /* 5px in rem */
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    -webkit-backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.25); /* 1px in rem */
+    border-radius: 0.5rem; /* 8px in rem */
     color: white;
-    padding: 0.3125rem 0.625rem; /* 5px 10px in rem */
+    padding: 0.375rem 0.75rem; /* 6px 12px in rem */
     cursor: pointer;
     font-size: 0.875rem; /* 14px in rem */
+    box-shadow: 
+      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
+      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
   }
   
   .logout-button:hover {
     background: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
+      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
   }
   
   .welcome-message {
     text-align: center;
     margin: 1.5rem 0;
     font-size: 1.125rem; /* 18px in rem */
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s;
+  }
+  
+  .panel-visible .welcome-message {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   .app-features {
     margin: 1.5rem 0;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+  }
+  
+  .panel-visible .app-features {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   .app-features ul {

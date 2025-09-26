@@ -1,9 +1,14 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
 
   // State for animation phases
   let backgroundVisible = false;
   let contentVisible = false;
+  let fadeOut = false;
+  let logoScale = 1;
+  let textOpacity = 0;
 
   // Cursor hiding and input blocking
   let hideCursor = true;
@@ -14,24 +19,43 @@
       backgroundVisible = true;
     }, 0);
 
-    // Phase 2: Content fade-in (after 2 seconds delay from start)
+    // Phase 2: Content animations (after 1.5 seconds)
     setTimeout(() => {
       contentVisible = true;
-    }, 2000);
+      // Animate logo scale
+      let scale = 1;
+      const scaleInterval = setInterval(() => {
+        scale += 0.02;
+        logoScale = Math.min(scale, 1.1);
+        if (scale >= 1.1) clearInterval(scaleInterval);
+      }, 20);
+      
+      // Animate text opacity
+      let opacity = 0;
+      const opacityInterval = setInterval(() => {
+        opacity += 0.05;
+        textOpacity = Math.min(opacity, 1);
+        if (opacity >= 1) clearInterval(opacityInterval);
+      }, 50);
+    }, 1500);
 
-    // Re-enable cursor after splash screen (optional - can be controlled by parent)
-    // setTimeout(() => {
-    //   hideCursor = false;
-    // }, 5000);
+    // Phase 3: Start fade-out transition (after 4 seconds)
+    setTimeout(() => {
+      fadeOut = true;
+      // Dispatch event when fade-out starts
+      setTimeout(() => {
+        dispatch('splashComplete');
+      }, 1500); // Match the fade-out duration
+    }, 4000);
   });
 </script>
 
-<div class="splash-screen {hideCursor ? 'hide-cursor' : ''}" class:visible={backgroundVisible}>
+<div class="splash-screen {hideCursor ? 'hide-cursor' : ''} {fadeOut ? 'fade-out' : ''}" class:visible={backgroundVisible}>
   <div class="splash-content" class:visible={contentVisible}>
-    <div class="logo-container">
+    <div class="logo-container" class:animate={contentVisible} style="transform: scale({logoScale});">
       <img src="/image/logo/logo.png" alt="Logo" class="logo" />
     </div>
-    <h1 class="welcome-text">Добро пожаловать</h1>
+    <h1 class="welcome-text" style="opacity: {textOpacity};">Добро пожаловать</h1>
   </div>
   <div class="copyright">Создано студией Saraylo</div>
 </div>
@@ -49,11 +73,16 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    transition: background 1.5s ease-out;
+    transition: all 1.5s cubic-bezier(0.65, 0, 0.35, 1);
   }
 
   .splash-screen.visible {
     background: linear-gradient(135deg, #000000 0%, #41B6E6 50%, #db3eb1 100%);
+  }
+
+  .splash-screen.fade-out {
+    opacity: 0;
+    visibility: hidden;
   }
 
   .splash-content {
@@ -62,7 +91,7 @@
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 1s ease-out;
+    transition: opacity 1s cubic-bezier(0.65, 0, 0.35, 1);
   }
 
   .splash-content.visible {
@@ -71,12 +100,19 @@
 
   .logo-container {
     margin-bottom: 1.5rem;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .logo-container.animate {
+    transform: scale(1.1);
   }
 
   .logo {
     width: 120px;
     height: 120px;
     object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(65, 182, 230, 0.7));
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .welcome-text {
@@ -86,6 +122,7 @@
     color: white;
     text-align: center;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .copyright {
@@ -94,10 +131,18 @@
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
+    opacity: 0;
+    animation: fadeIn 1s 2.5s forwards;
   }
 
   .hide-cursor {
     cursor: none;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
   }
 
   /* Responsive design */
