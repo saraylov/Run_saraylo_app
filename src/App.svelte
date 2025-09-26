@@ -1,13 +1,19 @@
 <script>
   import { onMount } from 'svelte';
   import SplashScreen from './components/SplashScreen.svelte';
-  
-  // Type declaration for Telegram user object
-  /** @typedef {{id: number, first_name: string, last_name?: string, username?: string, photo_url?: string, auth_date: number, hash: string}} TelegramUser */
+  import Home from './components/Home.svelte';
+  import Settings from './components/Settings.svelte';
   
   // State for authentication
-  let isAuthenticated = false;
-  let user = null;
+  let isAuthenticated = true; // Always authenticated
+  let user = {
+    id: 123456789,
+    first_name: "Тестовый",
+    last_name: "Пользователь",
+    username: "testuser"
+  };
+  
+  let currentView = 'splash'; // 'splash', 'home', 'settings'
   
   // Splash screen state
   let showSplash = true;
@@ -25,26 +31,6 @@
     
     // Start creating bubbles sequentially
     createBubbleSequentially();
-    
-    // Add Telegram auth function to window object
-    if (typeof window !== 'undefined') {
-      // Define the function that will be called by the Telegram widget
-      /** @param {TelegramUser} telegramUser */
-      // eslint-disable-next-line no-undef
-      window.onTelegramAuth = function(telegramUser) {
-        handleTelegramAuth(telegramUser);
-      };
-    }
-    
-    // Check if user is already authenticated
-    const savedAuth = localStorage.getItem('isAuthenticated');
-    const savedUser = localStorage.getItem('telegramUser');
-    
-    if (savedAuth === 'true' && savedUser) {
-      isAuthenticated = true;
-      user = JSON.parse(savedUser);
-      showSplash = false; // Hide splash screen if already authenticated
-    }
   });
   
   // Handle splash screen transition
@@ -52,9 +38,12 @@
     splashTransitioning = true;
     panelAnimationStage = 1; // Start panel appearing animation
     
-    // Wait for the fade-out animation to complete before hiding the splash screen
+    // After splash screen, go directly to home
     setTimeout(() => {
+      currentView = 'home';
       showSplash = false;
+      console.log('Splash transition complete, currentView set to:', currentView);
+      
       // Start the panel animation sequence with a smoother transition
       setTimeout(() => {
         panelAnimationStage = 2; // Panel fully visible
@@ -127,40 +116,28 @@
     requestAnimationFrame(animateBubbles);
   }
   
-  // Handle Telegram authentication
-  /** @param {TelegramUser} telegramUser */
-  function handleTelegramAuth(telegramUser) {
-    console.log('Logged in as', telegramUser);
-    user = telegramUser;
-    isAuthenticated = true;
-    showSplash = false; // Hide splash screen on authentication
-    
-    // Store user data in localStorage
-    localStorage.setItem('telegramUser', JSON.stringify(telegramUser));
-    localStorage.setItem('isAuthenticated', 'true');
+  // Handle navigation to settings
+  function handleGoToSettings() {
+    console.log('handleGoToSettings called, setting currentView to settings');
+    currentView = 'settings';
+    console.log('currentView is now:', currentView);
   }
   
-  // Emulate authentication for testing
-  function emulateAuth() {
-    const mockUser = {
-      id: 123456789,
-      first_name: "Тестовый",
-      last_name: "Пользователь",
-      username: "testuser",
-      photo_url: "",
-      auth_date: Math.floor(Date.now() / 1000),
-      hash: "mock_hash_for_testing"
-    };
-    
-    handleTelegramAuth(mockUser);
+  // Handle navigation back from settings
+  function handleSettingsBack() {
+    console.log('handleSettingsBack called, setting currentView to home');
+    currentView = 'home';
+    console.log('currentView is now:', currentView);
   }
   
-  // Logout function
-  function logout() {
-    isAuthenticated = false;
-    user = null;
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('telegramUser');
+  // Logout function - now just for testing transitions
+  function handleLogout() {
+    // For permanent auth, we'll just simulate a logout/login cycle
+    currentView = 'login'; // This will show nothing since we removed the login view
+    // Immediately go back to home
+    setTimeout(() => {
+      currentView = 'home';
+    }, 100);
   }
 </script>
 
@@ -181,57 +158,11 @@
       {/each}
     </div>
     
-    {#if !isAuthenticated}
-      <!-- Login Page -->
-      <div class="glass-panel login-panel {panelAnimationStage === 1 ? 'panel-appearing' : ''} {panelAnimationStage === 2 ? 'panel-visible' : ''}">
-        <header class="header">
-          <h1 class="title-animation">Vice Run</h1>
-        </header>
-        
-        <div class="login-content">
-          <p class="login-description">Войдите через Telegram для начала использования приложения</p>
-          
-          <!-- Telegram Login Widget -->
-          <div class="telegram-login-container">
-            <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                    data-telegram-login="Saraylo_bot" 
-                    data-size="large" 
-                    data-onauth="onTelegramAuth(user)" 
-                    data-request-access="write"></script>
-          </div>
-          
-          <!-- Emulation Button for Testing -->
-          <button class="emulate-auth-button" on:click={emulateAuth}>
-            Эмитация авторизации
-          </button>
-        </div>
-      </div>
-    {:else}
-      <!-- Main Application (after login) -->
-      <div class="glass-panel app-panel {panelAnimationStage === 1 ? 'panel-appearing' : ''} {panelAnimationStage === 2 ? 'panel-visible' : ''}">
-        <header class="header">
-          <h1 class="title-animation">Vice Run</h1>
-          <div class="user-info">
-            <span>Привет, {user.first_name}!</span>
-            <button class="logout-button" on:click={logout}>Выйти</button>
-          </div>
-        </header>
-        
-        <div class="welcome-message">
-          <p>Добро пожаловать в Vice Run Tracker!</p>
-          <p>Вы успешно вошли через Telegram.</p>
-        </div>
-        
-        <!-- Placeholder for the actual running tracker functionality -->
-        <div class="app-features">
-          <p>Здесь будет основной функционал трекера активности</p>
-          <ul>
-            <li>Отслеживание пробежек</li>
-            <li>Статистика тренировок</li>
-            <li>Достижения и награды</li>
-          </ul>
-        </div>
-      </div>
+    <!-- Home Page Component -->
+    {#if currentView === 'home'}
+      <Home onLogout={handleLogout} onSettings={handleGoToSettings} />
+    {:else if currentView === 'settings'}
+      <Settings onBack={handleSettingsBack} onLogout={handleLogout} user={user} />
     {/if}
   {/if}
 </main>
@@ -247,6 +178,7 @@
     overflow-x: hidden;
     position: relative;
   }
+  
   
   :global(#app) {
     max-width: 100%;
@@ -489,6 +421,7 @@
     transform: translateY(30px);
     transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
   }
+  
   
   .panel-visible .app-features {
     opacity: 1;
