@@ -108,8 +108,8 @@
   }
 
   .logo {
-    width: 120px;
-    height: 120px;
+    width: 250px;
+    height: 250px;
     object-fit: contain;
     filter: drop-shadow(0 0 20px rgba(65, 182, 230, 0.7));
     transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
