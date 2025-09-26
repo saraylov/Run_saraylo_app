@@ -305,29 +305,6 @@
     filter: blur(0);
   }
   
-  /* Header */
-  .header {
-    text-align: center;
-    padding: 0.9375rem; /* 15px in rem */
-  }
-  
-  .header h1 {
-    margin: 0;
-    font-size: 1.25rem; /* 2rem in rem */
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s;
-  }
-  
-  .title-animation {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  
   /* Login Panel */
   .login-panel {
     text-align: center;
@@ -471,10 +448,6 @@
     main {
       padding: 0.625rem; /* 10px in rem */
     }
-    
-    .header h1 {
-      font-size: 1.5rem; /* Increased for better visibility on mobile */
-    }
   }
   
   /* Additional breakpoints for better responsiveness */
@@ -488,10 +461,6 @@
     main {
       width: 80%;
       max-width: 37.5rem; /* 600px in rem */
-    }
-    
-    .header h1 {
-      font-size: 2rem;
     }
   }
   
@@ -513,10 +482,6 @@
     main {
       width: 65%;
       max-width: 56.25rem; /* 900px in rem */
-    }
-    
-    .header h1 {
-      font-size: 2.5rem;
     }
   }
 </style>

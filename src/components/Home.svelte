@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import Header from './Header.svelte'; // Import the new Header component
 
   // User data - permanent authentication
   let user = {
@@ -33,15 +34,8 @@
 {#if isLoading}
   <div class="loading">Загрузка...</div>
 {:else if user}
-  <!-- Header separated from main panel -->
-  <header class="header separate-header">
-    <h1>Главная</h1>
-    <div class="user-info">
-      <button class="settings-button" on:click={goToSettings}>
-        <span class="gear-icon">⚙️</span>
-      </button>
-    </div>
-  </header>
+  <!-- Use the new unified Header component -->
+  <Header title="Главная" showSettingsButton={true} onSettings={goToSettings} />
   
   <div class="glass-panel home-panel">
     <!-- Page header with page title -->
@@ -76,76 +70,11 @@
     font-size: 1.2rem;
   }
   
-  /* Separate header styling with glass panel effect */
-  .separate-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    margin-bottom: 1.5rem;
-    border-radius: 1.5rem; /* Same as glass panel */
-    
-    /* Glass panel effect - matching main panel */
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(0.625rem);
-    -webkit-backdrop-filter: blur(0.625rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
-      0 0.5rem 2.5rem rgba(0, 0, 0, 0.25),
-      inset 0 0 1.25rem rgba(255, 255, 255, 0.15),
-      inset 0 -0.125rem 0.25rem rgba(255, 255, 255, 0.1),
-      inset 0 0.125rem 0.25rem rgba(255, 255, 255, 0.15);
-    position: relative;
-    z-index: 15;
-  }
-  
-  .separate-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    /* Matching gradient background as main panel */
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  /* Gear icon styling */
-  .gear-icon {
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Settings button styling */
-  .settings-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 0.5rem;
-    color: white;
-    padding: 0.375rem 0.75rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    box-shadow: 
-      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
-      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0.5rem;
-  }
-  
-  .settings-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-  
-  /* Glass panel effect */
+  /* Add margin-top to account for fixed header */
   .glass-panel {
+    margin-top: 80px; /* Header height (60px) + top offset (1rem ≈ 16px) + some spacing */
+    
+    /* Glass panel effect */
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(0.625rem);
     -webkit-backdrop-filter: blur(0.625rem);
@@ -174,12 +103,6 @@
     font-size: 1.5rem;
     color: white;
     font-weight: 600;
-  }
-  
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
   }
   
   .welcome-message {

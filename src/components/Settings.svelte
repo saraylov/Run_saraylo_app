@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import AuthService from '../lib/AuthService.js';
+  import Header from './Header.svelte'; // Import the new Header component
 
   // User data prop (for permanent auth mode)
   export let user = null;
@@ -76,13 +77,8 @@
   <div class="error-message">{errorMessage}</div>
 {:else if user}
   <div class="settings-container">
-    <header class="settings-header separate-header">
-      <button class="back-button" on:click={goBack}>
-        <span class="back-icon">←</span>
-      </button>
-      <h1>Настройки</h1>
-      <div class="spacer"></div>
-    </header>
+    <!-- Use the new unified Header component -->
+    <Header title="Настройки" showBackButton={true} onBack={goBack} />
     
     <div class="glass-panel settings-panel">
       <!-- Round pencil button in top right corner -->
@@ -179,79 +175,11 @@
     gap: 1.5rem;
   }
   
-  /* Separate header styling with glass panel effect */
-  .settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    margin-bottom: 0;
-    border-radius: 1.5rem;
+  /* Add margin-top to account for fixed header */
+  .glass-panel {
+    margin-top: 80px; /* Header height (60px) + top offset (1rem ≈ 16px) + some spacing */
     
     /* Glass panel effect */
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(0.625rem);
-    -webkit-backdrop-filter: blur(0.625rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.18);
-    box-shadow: 
-      0 0.5rem 2.5rem rgba(0, 0, 0, 0.25),
-      inset 0 0 1.25rem rgba(255, 255, 255, 0.15),
-      inset 0 -0.125rem 0.25rem rgba(255, 255, 255, 0.1),
-      inset 0 0.125rem 0.25rem rgba(255, 255, 255, 0.15);
-    position: relative;
-    z-index: 15;
-  }
-  
-  .settings-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    flex: 1;
-    text-align: center;
-  }
-  
-  /* Gear icon styling */
-  .gear-icon {
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .back-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 0.5rem;
-    color: white;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-size: 1rem;
-    box-shadow: 
-      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
-      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-  
-  .spacer {
-    width: 48px; /* Same width as back button to center title */
-  }
-  
-  /* Glass panel effect */
-  .settings-panel {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(0.625rem);
     -webkit-backdrop-filter: blur(0.625rem);
