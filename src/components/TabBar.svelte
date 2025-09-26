@@ -26,7 +26,7 @@
 					<!-- Training icon -->
 					<img src="/icons/run.png" alt="Training" class="image-icon" />
 				</div>
-				<span class="tab-label">Профиль</span>
+				<span class="tab-label">Здоровье</span>
 			</div>
 		</div>
 		
@@ -47,14 +47,14 @@
 					<!-- Achievements icon -->
 					<img src="/icons/achievements.png" alt="Achievements" class="image-icon" />
 				</div>
-				<span class="tab-label">Достижения</span>
+				<span class="tab-label">Устройства</span>
 			</div>
 			<div class="tab-item">
 				<div class="tab-icon">
 					<!-- Settings icon -->
 					<img src="/icons/settings.png" alt="Settings" class="image-icon" />
 				</div>
-				<span class="tab-label">Настройки</span>
+				<span class="tab-label">Профиль</span>
 			</div>
 		</div>
 	</div>
