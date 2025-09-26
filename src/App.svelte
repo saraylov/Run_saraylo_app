@@ -37,14 +37,14 @@
       id: bubbleIdCounter++,
       x: Math.random() * 100,
       y: 110 + Math.random() * 20, // Start below the screen
-      size: 45 + Math.random() * 105, // Increased size: 3 times larger (45-150px)
-      speed: (20 / 5) / 6, // Slow down by 6 times (20 units in 30 seconds)
+      size: 2.8125 + Math.random() * 6.5625, // Increased size in rem (45-150px converted to rem)
+      speed: 0.05, // Slowed down speed in rem per frame (was 0.2)
       color: getRandomColor(), // Random color
       rotation: Math.random() * 360, // Random initial rotation
-      rotationSpeed: (-2 + Math.random() * 4) / 6, // Slow down rotation by 6 times
+      rotationSpeed: -2 + Math.random() * 4, // Rotation speed in degrees per frame
       // Zigzag movement properties
       initialX: Math.random() * 100,
-      amplitude: 0.5 + Math.random() * 1.5, // Horizontal movement amplitude
+      amplitude: 2 + Math.random() * 4, // Horizontal movement amplitude in rem
       frequency: 0.02 + Math.random() * 0.03, // Zigzag frequency
       phase: Math.random() * Math.PI * 2 // Random starting phase
     };
@@ -75,7 +75,7 @@
   function animateBubbles() {
     bubbles = bubbles.map(bubble => {
       // Calculate zigzag movement
-      let newY = bubble.y - bubble.speed * 0.1;
+      let newY = bubble.y - bubble.speed;
       let newX = bubble.initialX + Math.sin(newY * bubble.frequency + bubble.phase) * bubble.amplitude;
       let newRotation = bubble.rotation + bubble.rotationSpeed;
       
@@ -153,7 +153,7 @@
     {#each bubbles as bubble (bubble.id)}
       <div 
         class="bubble" 
-        style="left: {bubble.x}%; top: {bubble.y}%; width: {bubble.size}px; height: {bubble.size}px; color: {bubble.color}; transform: rotate({bubble.rotation}deg);"
+        style="left: {bubble.x}%; top: {bubble.y}%; width: {bubble.size}rem; height: {bubble.size}rem; color: {bubble.color}; transform: rotate({bubble.rotation}deg);"
       >
         S
       </div>
@@ -216,7 +216,7 @@
 <style>
   :global(body) {
     margin: 0;
-    padding: 20px;
+    padding: 1.25rem; /* 20px in rem */
     min-height: 100vh;
     background: linear-gradient(135deg, #000000 0%, #41B6E6 50%, #db3eb1 100%);
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -252,7 +252,7 @@
     font-weight: bold;
     font-size: calc(1em + 2vw); /* Increased font size for better visibility */
     opacity: 0.7;
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.5); /* 8px in rem */
     transition: opacity 0.3s ease;
     z-index: -1; /* Ensure bubbles are behind all other elements */
   }
@@ -260,10 +260,11 @@
   main {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-width: 500px;
+    gap: 1.25rem; /* 20px in rem */
+    width: 90%;
+    max-width: 31.25rem; /* 500px in rem */
     margin: 0 auto;
-    padding: 20px;
+    padding: 1.25rem; /* 20px in rem */
     position: relative;
     z-index: 10;
   }
@@ -271,44 +272,45 @@
   /* Glass panel effect - adjusted transparency */
   .glass-panel {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    -webkit-backdrop-filter: blur(0.3125rem); /* 5px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
+    border-radius: 1.25rem; /* 20px in rem */
+    padding: 1.25rem; /* 20px in rem */
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1); /* 4px, 16px in rem */
     position: relative;
     z-index: 15;
   }
   
   .glass-button {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
   }
   
   /* Header */
   .header {
     text-align: center;
-    padding: 15px;
+    padding: 0.9375rem; /* 15px in rem */
   }
   
   .header h1 {
     margin: 0;
-    font-size: 2rem;
+    font-size: 1.25rem; /* 2rem in rem */
     background: linear-gradient(90deg, #41B6E6, #db3eb1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
+  
   /* Activity Panel */
   .activity-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 25px;
+    gap: 1.5625rem; /* 25px in rem */
   }
   
   .metrics {
@@ -322,38 +324,38 @@
   }
   
   .metric-value {
-    font-size: 2.5rem;
+    font-size: 1.5625rem; /* 2.5rem in rem */
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 0.3125rem; /* 5px in rem */
   }
   
   .unit {
-    font-size: 1rem;
+    font-size: 0.625rem; /* 1rem in rem */
   }
   
   .metric-label {
-    font-size: 1rem;
+    font-size: 0.625rem; /* 1rem in rem */
     opacity: 0.8;
   }
   
   /* Control Button */
   .control-button {
-    width: 120px;
-    height: 120px;
+    width: 7.5rem; /* 120px in rem */
+    height: 7.5rem; /* 120px in rem */
     border-radius: 50%;
     border: none;
-    font-size: 1.5rem;
+    font-size: 0.9375rem; /* 1.5rem in rem */
     font-weight: bold;
     cursor: pointer;
     color: white;
     background: linear-gradient(135deg, #41B6E6, #db3eb1);
-    box-shadow: 0 4px 20px rgba(65, 182, 230, 0.4);
+    box-shadow: 0 0.25rem 1.25rem rgba(65, 182, 230, 0.4); /* 4px, 20px in rem */
     transition: all 0.3s ease;
   }
   
   .control-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba(65, 182, 230, 0.6);
+    box-shadow: 0 0.375rem 1.5625rem rgba(65, 182, 230, 0.6); /* 6px, 25px in rem */
   }
   
   .control-button:active {
@@ -366,9 +368,9 @@
     border: none;
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    font-size: 1rem;
-    padding: 5px 10px;
-    border-radius: 5px;
+    font-size: 0.625rem; /* 1rem in rem */
+    padding: 0.3125rem 0.625rem; /* 5px, 10px in rem */
+    border-radius: 0.3125rem; /* 5px in rem */
   }
   
   .reset-button:hover {
@@ -383,6 +385,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    font-size: 1.25rem; /* 2rem in rem */
   }
   
   .training-list {
@@ -395,8 +398,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.9375rem; /* 15px in rem */
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px in rem */
   }
   
   .training-item:last-child {
@@ -404,45 +407,108 @@
   }
   
   .training-date {
-    font-size: 0.9rem;
+    font-size: 0.5625rem; /* 0.9rem in rem */
     opacity: 0.8;
   }
   
   .training-metrics {
     display: flex;
-    gap: 15px;
+    gap: 0.9375rem; /* 15px in rem */
   }
   
   .metric-small {
-    font-size: 0.9rem;
-    min-width: 80px;
+    font-size: 0.5625rem; /* 0.9rem in rem */
+    min-width: 5rem; /* 80px in rem */
     text-align: center;
   }
   
   .no-trainings {
     text-align: center;
     opacity: 0.7;
-    padding: 20px;
+    padding: 1.25rem; /* 20px in rem */
   }
   
   /* Responsive design */
-  @media (max-width: 600px) {
+  @media (max-width: 37.5rem) { /* 600px in rem */
     main {
-      padding: 10px;
+      padding: 0.625rem; /* 10px in rem */
     }
     
     .metrics {
       flex-direction: column;
-      gap: 15px;
+      gap: 0.9375rem; /* 15px in rem */
     }
     
     .metric-value {
-      font-size: 2rem;
+      font-size: 1.25rem; /* 2rem in rem */
     }
     
     .control-button {
-      width: 100px;
-      height: 100px;
+      width: 6.25rem; /* 100px in rem */
+      height: 6.25rem; /* 100px in rem */
+    }
+    
+    .header h1 {
+      font-size: 1.5rem; /* Increased for better visibility on mobile */
+    }
+    
+    .history-panel h2 {
+      font-size: 1.5rem; /* Increased for better visibility on mobile */
+    }
+  }
+  
+  /* Additional breakpoints for better responsiveness */
+  @media (min-width: 48rem) { /* 768px in rem */
+    main {
+      width: 85%;
+    }
+  }
+  
+  @media (min-width: 64rem) { /* 1024px in rem */
+    main {
+      width: 80%;
+      max-width: 37.5rem; /* 600px in rem */
+    }
+    
+    .header h1 {
+      font-size: 2rem;
+    }
+    
+    .history-panel h2 {
+      font-size: 2rem;
+    }
+  }
+  
+  @media (min-width: 90rem) { /* 1440px in rem */
+    main {
+      width: 75%;
+      max-width: 43.75rem; /* 700px in rem */
+    }
+  }
+  
+  @media (min-width: 120rem) { /* 1920px in rem */
+    main {
+      width: 70%;
+      max-width: 50rem; /* 800px in rem */
+    }
+  }
+  
+  @media (min-width: 160rem) { /* 2560px in rem */
+    main {
+      width: 65%;
+      max-width: 56.25rem; /* 900px in rem */
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+    }
+    
+    .history-panel h2 {
+      font-size: 2.5rem;
+    }
+    
+    .metric-value {
+      font-size: 2rem; /* Larger metrics on ultra-wide screens */
     }
   }
 </style>

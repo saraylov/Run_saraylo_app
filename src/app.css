@@ -10,7 +10,8 @@
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-blur: blur(10px);
   
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Fluid typography */
+  font-size: clamp(14px, 2.5vw, 18px); /* Fluid base font size */
   line-height: 1.5;
   font-weight: 400;
 
@@ -24,16 +25,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  /* Ensure fluid scaling across all elements */
+  font-size: clamp(14px, 2.5vw, 18px);
+}
+
 body {
   margin: 0;
   display: flex;
   place-items: center;
-  min-width: 320px;
+  min-width: 20rem; /* 320px in rem */
   min-height: 100vh;
 }
 
 #app {
   max-width: 100%;
+  width: 90%; /* Use percentage for fluid width */
+  max-width: 120rem; /* Limit width on large screens (1920px) */
   margin: 0 auto;
   padding: 0;
   text-align: center;
@@ -44,9 +52,10 @@ body {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 0.0625rem solid var(--glass-border); /* 1px in rem */
+  border-radius: 1.25rem; /* 20px in rem */
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2); /* 8px, 32px in rem */
+  padding: 1.25rem; /* 20px in rem */
 }
 
 /* Gradient Text */
@@ -58,8 +67,12 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) { /* 600px in rem */
   body {
-    padding: 10px;
+    padding: 0.625rem; /* 10px in rem */
+  }
+  
+  .glass-panel {
+    padding: 0.625rem; /* 10px in rem */
   }
 }
