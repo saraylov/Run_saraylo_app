@@ -52,13 +52,13 @@
     // Add the new bubble to the array
     bubbles = [...bubbles, newBubble];
     
-    // Limit the number of bubbles to prevent performance issues
-    if (bubbles.length > 30) {
+    // Limit the number of bubbles to prevent performance issues (increased from 30 to 60)
+    if (bubbles.length > 60) {
       bubbles = bubbles.slice(1); // Remove the oldest bubble
     }
     
-    // Schedule the next bubble creation
-    setTimeout(createBubbleSequentially, 1000); // Create a new bubble every second
+    // Schedule the next bubble creation (increased frequency: every 500ms instead of 1000ms)
+    setTimeout(createBubbleSequentially, 500); // Create a new bubble every 0.5 seconds
   }
   
   // Get random color from Miami Vice palette
