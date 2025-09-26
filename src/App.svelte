@@ -1,8 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import SplashScreen from './components/SplashScreen.svelte';
+  import SplashScreen from './components/Splashscreen.svelte'; // Fixed the import - was SplashScreen.svelte, now Splashscreen.svelte
   import Home from './components/Home.svelte';
   import Settings from './components/Settings.svelte';
+  import TabBar from './components/TabBar.svelte'; // Import TabBar component
+  import { showTabBar, hideTabBar } from './lib/tabBarStore.js'; // Import TabBar control functions
   
   // State for authentication
   let isAuthenticated = true; // Always authenticated
@@ -42,6 +44,7 @@
     setTimeout(() => {
       currentView = 'home';
       showSplash = false;
+      showTabBar(); // Show TabBar when transitioning to home
       console.log('Splash transition complete, currentView set to:', currentView);
       
       // Start the panel animation sequence with a smoother transition
@@ -120,6 +123,7 @@
   function handleGoToSettings() {
     console.log('handleGoToSettings called, setting currentView to settings');
     currentView = 'settings';
+    showTabBar(); // Show TabBar on settings page
     console.log('currentView is now:', currentView);
   }
   
@@ -127,18 +131,37 @@
   function handleSettingsBack() {
     console.log('handleSettingsBack called, setting currentView to home');
     currentView = 'home';
+    showTabBar(); // Keep TabBar visible on home page
     console.log('currentView is now:', currentView);
   }
   
   // Logout function - now just for testing transitions
   function handleLogout() {
+    // Hide TabBar during logout
+    hideTabBar();
+    
     // For permanent auth, we'll just simulate a logout/login cycle
     currentView = 'login'; // This will show nothing since we removed the login view
     // Immediately go back to home
     setTimeout(() => {
       currentView = 'home';
+      showTabBar(); // Show TabBar when returning to home
     }, 100);
   }
+  
+  // Function to update TabBar visibility based on current view
+  function updateTabBarVisibility() {
+    if (currentView === 'splash') {
+      hideTabBar();
+    } else if (currentView === 'home' || currentView === 'settings') {
+      showTabBar();
+    } else {
+      hideTabBar();
+    }
+  }
+  
+  // Watch for changes in currentView and update TabBar visibility
+  $: updateTabBarVisibility();
 </script>
 
 <main>
@@ -165,6 +188,9 @@
       <Settings onBack={handleSettingsBack} onLogout={handleLogout} user={user} />
     {/if}
   {/if}
+  
+  <!-- Global TabBar component -->
+  <TabBar />
 </main>
 
 <style>
@@ -222,6 +248,8 @@
     padding: 1.25rem; /* 20px in rem */
     position: relative;
     z-index: 10;
+    /* Add padding to account for floating TabBar height */
+    padding-bottom: 5.5rem; /* Increased padding to account for floating TabBar (60px height + 1rem bottom offset + extra spacing) */
   }
   
   /* Enhanced Glass panel effect - more pronounced bulging effect */
