@@ -5,14 +5,14 @@
 
 <script>
   import { onMount, afterUpdate } from 'svelte';
-  import Splashscreen from './lib/Splashscreen.svelte';
-  
-  // State for splash screen
-  let showSplash = true;
+  import SplashScreen from './components/SplashScreen.svelte';
   
   // State for authentication
   let isAuthenticated = false;
   let user = null;
+  
+  // Splash screen state
+  let showSplash = true;
   
   // Bubble animation state
   let bubbles = [];
@@ -20,6 +20,11 @@
   
   // Initialize bubble animation
   onMount(() => {
+    // Hide splash screen after 5 seconds (or when authentication happens)
+    setTimeout(() => {
+      showSplash = false;
+    }, 5000);
+    
     // Start bubble animation
     animateBubbles();
     
@@ -28,7 +33,6 @@
     
     // Add Telegram auth function to window object
     if (typeof window !== 'undefined') {
-      // @ts-ignore
       window.onTelegramAuth = function(telegramUser) {
         // Call the local function
         handleTelegramAuth(telegramUser);
@@ -42,12 +46,8 @@
     if (savedAuth === 'true' && savedUser) {
       isAuthenticated = true;
       user = JSON.parse(savedUser);
+      showSplash = false; // Hide splash screen if already authenticated
     }
-    
-    // Hide splash screen after 5 seconds
-    setTimeout(() => {
-      showSplash = false;
-    }, 5000);
   });
   
   // Create bubbles one by one at intervals
@@ -120,6 +120,7 @@
     console.log('Logged in as', telegramUser);
     user = telegramUser;
     isAuthenticated = true;
+    showSplash = false; // Hide splash screen on authentication
     
     // Store user data in localStorage
     localStorage.setItem('telegramUser', JSON.stringify(telegramUser));
@@ -151,8 +152,9 @@
 </script>
 
 <main>
+  <!-- Show splash screen initially -->
   {#if showSplash}
-    <Splashscreen />
+    <SplashScreen />
   {:else}
     <!-- Bubbles background -->
     <div class="bubbles-container">
