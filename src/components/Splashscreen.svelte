@@ -1,3 +1,65 @@
+<script>
+  import { onMount, createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
+
+  // State for animation phases
+  let backgroundVisible = false;
+  let contentVisible = false;
+  let fadeOut = false;
+  let logoScale = 1;
+  let textOpacity = 0;
+
+  // Cursor hiding and input blocking
+  let hideCursor = true;
+
+  onMount(() => {
+    // Phase 1: Background fade-in (1.5 seconds)
+    setTimeout(() => {
+      backgroundVisible = true;
+    }, 0);
+
+    // Phase 2: Content animations (after 1.5 seconds)
+    setTimeout(() => {
+      contentVisible = true;
+      // Animate logo scale
+      let scale = 1;
+      const scaleInterval = setInterval(() => {
+        scale += 0.02;
+        logoScale = Math.min(scale, 1.1);
+        if (scale >= 1.1) clearInterval(scaleInterval);
+      }, 20);
+      
+      // Animate text opacity
+      let opacity = 0;
+      const opacityInterval = setInterval(() => {
+        opacity += 0.05;
+        textOpacity = Math.min(opacity, 1);
+        if (opacity >= 1) clearInterval(opacityInterval);
+      }, 50);
+    }, 1500);
+
+    // Phase 3: Start fade-out transition (after 4 seconds)
+    setTimeout(() => {
+      fadeOut = true;
+      // Dispatch event when fade-out starts
+      setTimeout(() => {
+        dispatch('splashComplete');
+      }, 1500); // Match the fade-out duration
+    }, 4000);
+  });
+</script>
+
+<div class="splash-screen {hideCursor ? 'hide-cursor' : ''} {fadeOut ? 'fade-out' : ''}" class:visible={backgroundVisible}>
+  <div class="splash-content" class:visible={contentVisible}>
+    <div class="logo-container" class:animate={contentVisible} style="transform: scale({logoScale});">
+      <img src="/image/logo/logo.png" alt="Logo" class="logo" />
+    </div>
+    <h1 class="welcome-text" style="opacity: {textOpacity};">Добро пожаловать</h1>
+  </div>
+  <div class="copyright">Создано студией Saraylo</div>
+</div>
+
 <style>
   .splash-screen {
     position: fixed;
