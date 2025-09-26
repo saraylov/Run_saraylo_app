@@ -160,6 +160,13 @@
     }
   }
   
+  // Handle central button click
+  function handleCentralButtonClick() {
+    console.log('Central button clicked!');
+    // For now, we'll just log the click
+    // You can implement any functionality you want here
+  }
+  
   // Watch for changes in currentView and update TabBar visibility
   $: updateTabBarVisibility();
 </script>
@@ -190,7 +197,7 @@
   {/if}
   
   <!-- Global TabBar component -->
-  <TabBar />
+  <TabBar on:centralButtonClicked={handleCentralButtonClick} />
 </main>
 
 <style>
