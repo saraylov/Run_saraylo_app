@@ -26,7 +26,7 @@
 					<!-- Training icon -->
 					<img src="/icons/run.png" alt="Training" class="image-icon" />
 				</div>
-				<span class="tab-label">Тренировки</span>
+				<span class="tab-label">Профиль</span>
 			</div>
 		</div>
 		
@@ -145,8 +145,8 @@
 		top: -25px; /* Position above the TabBar */
 		left: 50%;
 		transform: translateX(-50%);
-		width: 70px;
-		height: 70px;
+		width: 80.5px; /* Increased by 15% from 70px */
+		height: 80.5px; /* Increased by 15% from 70px */
 		z-index: 1001;
 		cursor: pointer;
 	}
@@ -172,8 +172,8 @@
 		position: absolute;
 		top: 5px; /* 5px gap from cutout */
 		left: 5px;
-		width: 60px; /* 10px smaller than cutout */
-		height: 60px;
+		width: 70.5px; /* Increased by 15% from 60px, maintaining 5px gap */
+		height: 70.5px; /* Increased by 15% from 60px, maintaining 5px gap */
 		border-radius: 50%;
 		background: linear-gradient(135deg, #41B6E6, #db3eb1);
 		display: flex;
@@ -199,5 +199,14 @@
 		box-shadow: 
 			0 2px 5px rgba(0, 0, 0, 0.2),
 			inset 0 2px 2px rgba(255, 255, 255, 0.2);
+	}
+	
+	/* Adjust spacing for other tab items to accommodate larger central button */
+	.tab-group.left {
+		margin-right: 40.25px; /* Half of increased central button width */
+	}
+	
+	.tab-group.right {
+		margin-left: 40.25px; /* Half of increased central button width */
 	}
 </style>
