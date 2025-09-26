@@ -41,3 +41,21 @@ If you have state that's important to retain within a component, consider creati
 import { writable } from 'svelte/store'
 export default writable(0)
 ```
+
+# Making Your Application Publicly Accessible
+
+This application can be made accessible from the internet using Cloudflare Tunnel. Follow the instructions in [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md) for detailed setup instructions.
+
+## Quick Setup
+
+1. Install cloudflared (see [setup-tunnel.bat](setup-tunnel.bat))
+2. Run your application: `npm run dev`
+3. In a separate terminal, authenticate with Cloudflare: `cloudflared tunnel login`
+4. Create a tunnel: `cloudflared tunnel create my-saraylo-app`
+5. Follow the configuration instructions in the setup guide
+6. Run the tunnel: `cloudflared tunnel run my-saraylo-app`
+
+For a quick temporary tunnel, you can use:
+`cloudflared tunnel --hostname my-saraylo-app.your-domain.com --url http://localhost:5173`
+
+Note: You'll need a domain configured with Cloudflare for this to work. You can use a free subdomain from Cloudflare if you don't have your own domain.

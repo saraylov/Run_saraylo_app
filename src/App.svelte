@@ -1,33 +1,53 @@
+<script context="module">
+  // This runs in module context (once, when the module is first imported)
+  // We can't access window here as it doesn't exist in server-side rendering
+</script>
+
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate } from 'svelte';
+  import Splashscreen from './lib/Splashscreen.svelte';
   
-  // State variables
-  let isRunning = false;
-  let startTime = 0;
-  let elapsedTime = 0;
-  let distance = 0; // in kilometers
-  let pace = 0; // min/km
-  let intervalId;
+  // State for splash screen
+  let showSplash = true;
   
-  // Training history
-  let trainings = [];
+  // State for authentication
+  let isAuthenticated = false;
+  let user = null;
   
-  // Bubble animation
+  // Bubble animation state
   let bubbles = [];
   let bubbleIdCounter = 0;
   
-  // Load trainings from localStorage on mount
+  // Initialize bubble animation
   onMount(() => {
-    const savedTrainings = localStorage.getItem('trainings');
-    if (savedTrainings) {
-      trainings = JSON.parse(savedTrainings);
-    }
-    
     // Start bubble animation
     animateBubbles();
     
     // Start creating bubbles sequentially
     createBubbleSequentially();
+    
+    // Add Telegram auth function to window object
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.onTelegramAuth = function(telegramUser) {
+        // Call the local function
+        handleTelegramAuth(telegramUser);
+      };
+    }
+    
+    // Check if user is already authenticated
+    const savedAuth = localStorage.getItem('isAuthenticated');
+    const savedUser = localStorage.getItem('telegramUser');
+    
+    if (savedAuth === 'true' && savedUser) {
+      isAuthenticated = true;
+      user = JSON.parse(savedUser);
+    }
+    
+    // Hide splash screen after 5 seconds
+    setTimeout(() => {
+      showSplash = false;
+    }, 5000);
   });
   
   // Create bubbles one by one at intervals
@@ -95,122 +115,110 @@
     requestAnimationFrame(animateBubbles);
   }
   
-  // Format time as MM:SS
-  function formatTime(ms) {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  
-  // Start or stop the timer
-  function toggleTimer() {
-    if (isRunning) {
-      // Stop the timer
-      clearInterval(intervalId);
-      
-      // Save the training
-      const training = {
-        id: Date.now(),
-        duration: elapsedTime,
-        distance: distance,
-        pace: pace,
-        date: new Date().toLocaleDateString()
-      };
-      
-      trainings = [training, ...trainings];
-      localStorage.setItem('trainings', JSON.stringify(trainings));
-    } else {
-      // Start the timer
-      startTime = Date.now() - elapsedTime;
-      intervalId = setInterval(() => {
-        elapsedTime = Date.now() - startTime;
-        // Simulate distance increase (1 km per 5 minutes)
-        distance = parseFloat(((elapsedTime / 1000 / 60) / 5).toFixed(2));
-        // Calculate pace (min/km)
-        if (distance > 0) {
-          pace = parseFloat(((elapsedTime / 1000 / 60) / distance).toFixed(2));
-        }
-      }, 100);
-    }
+  // Handle Telegram authentication
+  function handleTelegramAuth(telegramUser) {
+    console.log('Logged in as', telegramUser);
+    user = telegramUser;
+    isAuthenticated = true;
     
-    isRunning = !isRunning;
+    // Store user data in localStorage
+    localStorage.setItem('telegramUser', JSON.stringify(telegramUser));
+    localStorage.setItem('isAuthenticated', 'true');
   }
   
-  // Reset the current activity
-  function resetActivity() {
-    clearInterval(intervalId);
-    isRunning = false;
-    elapsedTime = 0;
-    distance = 0;
-    pace = 0;
+  // Emulate authentication for testing
+  function emulateAuth() {
+    const mockUser = {
+      id: 123456789,
+      first_name: "Тестовый",
+      last_name: "Пользователь",
+      username: "testuser",
+      photo_url: "",
+      auth_date: Math.floor(Date.now() / 1000),
+      hash: "mock_hash_for_testing"
+    };
+    
+    handleTelegramAuth(mockUser);
+  }
+  
+  // Logout function
+  function logout() {
+    isAuthenticated = false;
+    user = null;
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('telegramUser');
   }
 </script>
 
 <main>
-  <!-- Bubbles background -->
-  <div class="bubbles-container">
-    {#each bubbles as bubble (bubble.id)}
-      <div 
-        class="bubble" 
-        style="left: {bubble.x}%; top: {bubble.y}%; width: {bubble.size}rem; height: {bubble.size}rem; color: {bubble.color}; transform: rotate({bubble.rotation}deg);"
-      >
-        S
-      </div>
-    {/each}
-  </div>
-  
-  <!-- Header -->
-  <header class="glass-panel header">
-    <h1>Vice Run</h1>
-  </header>
-  
-  <!-- Current Activity Panel -->
-  <section class="glass-panel activity-panel">
-    <div class="metrics">
-      <div class="metric">
-        <div class="metric-value">{formatTime(elapsedTime)}</div>
-        <div class="metric-label">Время</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">{distance.toFixed(2)} <span class="unit">км</span></div>
-        <div class="metric-label">Дистанция</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">{pace.toFixed(2)} <span class="unit">мин/км</span></div>
-        <div class="metric-label">Темп</div>
-      </div>
+  {#if showSplash}
+    <Splashscreen />
+  {:else}
+    <!-- Bubbles background -->
+    <div class="bubbles-container">
+      {#each bubbles as bubble (bubble.id)}
+        <div 
+          class="bubble" 
+          style="left: {bubble.x}%; top: {bubble.y}%; width: {bubble.size}rem; height: {bubble.size}rem; color: {bubble.color}; transform: rotate({bubble.rotation}deg);"
+        >
+          S
+        </div>
+      {/each}
     </div>
     
-    <!-- Control Button -->
-    <button class="control-button glass-button" class:active={isRunning} on:click={toggleTimer}>
-      {isRunning ? 'Стоп' : 'Старт'}
-    </button>
-    
-    <!-- Reset Button -->
-    <button class="reset-button" on:click={resetActivity}>Сброс</button>
-  </section>
-  
-  <!-- Training History -->
-  <section class="glass-panel history-panel">
-    <h2>История тренировок</h2>
-    {#if trainings.length > 0}
-      <ul class="training-list">
-        {#each trainings as training (training.id)}
-          <li class="training-item">
-            <div class="training-date">{training.date}</div>
-            <div class="training-metrics">
-              <span class="metric-small">{formatTime(training.duration)}</span>
-              <span class="metric-small">{training.distance.toFixed(2)} км</span>
-              <span class="metric-small">{training.pace.toFixed(2)} мин/км</span>
-            </div>
-          </li>
-        {/each}
-      </ul>
+    {#if !isAuthenticated}
+      <!-- Login Page -->
+      <div class="glass-panel login-panel">
+        <header class="header">
+          <h1>Vice Run</h1>
+        </header>
+        
+        <div class="login-content">
+          <p class="login-description">Войдите через Telegram для начала использования приложения</p>
+          
+          <!-- Telegram Login Widget -->
+          <div class="telegram-login-container">
+            <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                    data-telegram-login="Saraylo_bot" 
+                    data-size="large" 
+                    data-onauth="onTelegramAuth(user)" 
+                    data-request-access="write"></script>
+          </div>
+          
+          <!-- Emulation Button for Testing -->
+          <button class="emulate-auth-button" on:click={emulateAuth}>
+            Эмитация авторизации
+          </button>
+        </div>
+      </div>
     {:else}
-      <p class="no-trainings">Нет завершенных тренировок</p>
+      <!-- Main Application (after login) -->
+      <div class="glass-panel app-panel">
+        <header class="header">
+          <h1>Vice Run</h1>
+          <div class="user-info">
+            <span>Привет, {user.first_name}!</span>
+            <button class="logout-button" on:click={logout}>Выйти</button>
+          </div>
+        </header>
+        
+        <div class="welcome-message">
+          <p>Добро пожаловать в Vice Run Tracker!</p>
+          <p>Вы успешно вошли через Telegram.</p>
+        </div>
+        
+        <!-- Placeholder for the actual running tracker functionality -->
+        <div class="app-features">
+          <p>Здесь будет основной функционал трекера активности</p>
+          <ul>
+            <li>Отслеживание пробежек</li>
+            <li>Статистика тренировок</li>
+            <li>Достижения и награды</li>
+          </ul>
+        </div>
+      </div>
     {/if}
-  </section>
+  {/if}
 </main>
 
 <style>
@@ -282,13 +290,6 @@
     z-index: 15;
   }
   
-  .glass-button {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
-  }
-  
   /* Header */
   .header {
     text-align: center;
@@ -304,128 +305,81 @@
     background-clip: text;
   }
   
-  
-  /* Activity Panel */
-  .activity-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5625rem; /* 25px in rem */
-  }
-  
-  .metrics {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-  }
-  
-  .metric {
+  /* Login Panel */
+  .login-panel {
     text-align: center;
   }
   
-  .metric-value {
-    font-size: 1.5625rem; /* 2.5rem in rem */
-    font-weight: bold;
-    margin-bottom: 0.3125rem; /* 5px in rem */
+  .login-description {
+    font-size: 1rem;
+    margin: 1.5rem 0;
+    opacity: 0.9;
   }
   
-  .unit {
-    font-size: 0.625rem; /* 1rem in rem */
+  .telegram-login-container {
+    margin: 2rem 0;
   }
   
-  .metric-label {
-    font-size: 0.625rem; /* 1rem in rem */
-    opacity: 0.8;
-  }
-  
-  /* Control Button */
-  .control-button {
-    width: 7.5rem; /* 120px in rem */
-    height: 7.5rem; /* 120px in rem */
-    border-radius: 50%;
-    border: none;
-    font-size: 0.9375rem; /* 1.5rem in rem */
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-    background: linear-gradient(135deg, #41B6E6, #db3eb1);
-    box-shadow: 0 0.25rem 1.25rem rgba(65, 182, 230, 0.4); /* 4px, 20px in rem */
-    transition: all 0.3s ease;
-  }
-  
-  .control-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0.375rem 1.5625rem rgba(65, 182, 230, 0.6); /* 6px, 25px in rem */
-  }
-  
-  .control-button:active {
-    transform: scale(0.95);
-  }
-  
-  /* Reset Button */
-  .reset-button {
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
-    font-size: 0.625rem; /* 1rem in rem */
-    padding: 0.3125rem 0.625rem; /* 5px, 10px in rem */
-    border-radius: 0.3125rem; /* 5px in rem */
-  }
-  
-  .reset-button:hover {
+  /* Emulation Button */
+  .emulate-auth-button {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
+    border-radius: 0.3125rem; /* 5px in rem */
+    color: white;
+    padding: 0.625rem 1.25rem; /* 10px 20px in rem */
+    cursor: pointer;
+    font-size: 1rem; /* 16px in rem */
+    margin-top: 1.25rem; /* 20px in rem */
   }
   
-  /* History Panel */
-  .history-panel h2 {
-    margin-top: 0;
-    text-align: center;
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.25rem; /* 2rem in rem */
+  .emulate-auth-button:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
   
-  .training-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .training-item {
+  /* App Panel (after login) */
+  .user-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.9375rem; /* 15px in rem */
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px in rem */
+    margin-top: 1rem;
   }
   
-  .training-item:last-child {
-    border-bottom: none;
+  .logout-button {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    -webkit-backdrop-filter: blur(0.1875rem); /* 3px in rem */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px in rem */
+    border-radius: 0.3125rem; /* 5px in rem */
+    color: white;
+    padding: 0.3125rem 0.625rem; /* 5px 10px in rem */
+    cursor: pointer;
+    font-size: 0.875rem; /* 14px in rem */
   }
   
-  .training-date {
-    font-size: 0.5625rem; /* 0.9rem in rem */
-    opacity: 0.8;
+  .logout-button:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
   
-  .training-metrics {
-    display: flex;
-    gap: 0.9375rem; /* 15px in rem */
-  }
-  
-  .metric-small {
-    font-size: 0.5625rem; /* 0.9rem in rem */
-    min-width: 5rem; /* 80px in rem */
+  .welcome-message {
     text-align: center;
+    margin: 1.5rem 0;
+    font-size: 1.125rem; /* 18px in rem */
   }
   
-  .no-trainings {
-    text-align: center;
-    opacity: 0.7;
-    padding: 1.25rem; /* 20px in rem */
+  .app-features {
+    margin: 1.5rem 0;
+  }
+  
+  .app-features ul {
+    text-align: left;
+    margin-top: 1rem;
+    padding-left: 1.25rem; /* 20px in rem */
+  }
+  
+  .app-features li {
+    margin-bottom: 0.625rem; /* 10px in rem */
   }
   
   /* Responsive design */
@@ -434,25 +388,7 @@
       padding: 0.625rem; /* 10px in rem */
     }
     
-    .metrics {
-      flex-direction: column;
-      gap: 0.9375rem; /* 15px in rem */
-    }
-    
-    .metric-value {
-      font-size: 1.25rem; /* 2rem in rem */
-    }
-    
-    .control-button {
-      width: 6.25rem; /* 100px in rem */
-      height: 6.25rem; /* 100px in rem */
-    }
-    
     .header h1 {
-      font-size: 1.5rem; /* Increased for better visibility on mobile */
-    }
-    
-    .history-panel h2 {
       font-size: 1.5rem; /* Increased for better visibility on mobile */
     }
   }
@@ -471,10 +407,6 @@
     }
     
     .header h1 {
-      font-size: 2rem;
-    }
-    
-    .history-panel h2 {
       font-size: 2rem;
     }
   }
@@ -501,14 +433,6 @@
     
     .header h1 {
       font-size: 2.5rem;
-    }
-    
-    .history-panel h2 {
-      font-size: 2.5rem;
-    }
-    
-    .metric-value {
-      font-size: 2rem; /* Larger metrics on ultra-wide screens */
     }
   }
 </style>
