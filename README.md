@@ -1,61 +1,97 @@
-# Svelte + Vite
+# Компонент вложенных полуколец активности
 
-This template should help get you started developing with Svelte in Vite.
+## Описание
 
-## Recommended IDE Setup
+Компонент из трех концентрических полуколец с углом охвата 270 градусов, визуализирующих прогресс с точной системой координат и возможностью тестирования через кнопку имитации активности.
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## Основные характеристики
 
-## Need an official Svelte framework?
+### Геометрические требования к полукольцам
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+- **Система координат**: 
+  - 0° - вертикально вверх
+  - 90° - справа
+  - 180° - вертикально вниз
+  - 270° - слева
+- **Начало дуги**: 225°
+- **Конец дуги**: 135°
+- **Направление заполнения**: по часовой стрелке от 225° к 135°
+- **Структура**: три полукольца расположены концентрически с равномерным расстоянием между ними
 
-## Technical considerations
+### Механика прогресс-индикатора
 
-**Why use this over SvelteKit?**
+- **Заполнение**: отображается как заполнение контура каждого полукольца от начальной точки
+- **Многократный прогресс**: при достижении 100% заполнения прогресс продолжается на втором витке с измененным цветом
+- **Цветовая схема**: каждый последующий виток (100-200%, 200-300% и т.д.) сопровождается сменой градиента или цвета
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+### Элементы управления и тестирования
 
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+- **Кнопка имитации активности**: 
+  - Расположена под полукольцами
+  - Текст: "Запустить активность"
+  - При нажатии запускается анимация плавного заполнения всех трех полуколец от 0% до 150% за 5 секунд
+  - Демонстрирует заполнение первого витка (0-100%) и переход на второй виток (100-150%)
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+## Технические требования
 
-**Why include `.vscode/extensions.json`?**
+- **Адаптивность**: компонент масштабируется пропорционально размерам контейнера
+- **Плавность**: анимация заполнения плавная, без рывков
+- **Независимость**: каждое полукольцо функционирует независимо и отображает свой уровень прогресса
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+## Использование компонента
 
-**Why enable `checkJs` in the JS template?**
+### Основные параметры
 
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+```svelte
+<ActivityRings 
+  size={200}              // Размер компонента в пикселях
+  strokeWidth={20}        // Толщина полуколец
+  ringColors={['#41B6E6', '#db3eb1', '#FFFFFF']}  // Цвета полуколец
+  ringBgColors={['rgba(65, 182, 230, 0.2)', 'rgba(219, 62, 177, 0.2)', 'rgba(255, 255, 255, 0.2)']}  // Цвета фона
+  progress1={0}           // Прогресс первого полукольца (0-100+)
+  progress2={0}           // Прогресс второго полукольца (0-100+)
+  progress3={0}           // Прогресс третьего полукольца (0-100+)
+  hasData={true}          // Есть ли данные для отображения
+  showWhenNoData={true}   // Показывать ли компонент при отсутствии данных
+/>
 ```
 
-# Making Your Application Publicly Accessible
+### Пример использования
 
-This application can be made accessible from the internet using Cloudflare Tunnel. Follow the instructions in [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md) for detailed setup instructions.
+```svelte
+<script>
+  import ActivityRings from './components/ActivityRings.svelte';
+</script>
 
-## Quick Setup
+<div>
+  <ActivityRings 
+    size={250}
+    strokeWidth={25}
+    hasData={true}
+    showWhenNoData={true}
+  />
+</div>
+```
 
-1. Install cloudflared (see [setup-tunnel.bat](setup-tunnel.bat))
-2. Run your application: `npm run dev`
-3. In a separate terminal, authenticate with Cloudflare: `cloudflared tunnel login`
-4. Create a tunnel: `cloudflared tunnel create my-saraylo-app`
-5. Follow the configuration instructions in the setup guide
-6. Run the tunnel: `cloudflared tunnel run my-saraylo-app`
+## Демонстрация
 
-For a quick temporary tunnel, you can use:
-`cloudflared tunnel --hostname my-saraylo-app.your-domain.com --url http://localhost:5173`
+Для тестирования компонента доступна специальная страница с кнопкой запуска анимации. При нажатии кнопки происходит плавное заполнение всех полуколец, демонстрирующее переход на второй виток с изменением цвета.
 
-Note: You'll need a domain configured with Cloudflare for this to work. You can use a free subdomain from Cloudflare if you don't have your own domain.
+## Цветовая палитра
+
+Компонент использует цвета из палитры приложения Miami Vice:
+- Miami Blue: `#41B6E6`
+- Miami Pink: `#db3eb1`
+- White: `#FFFFFF`
+
+## Адаптивность
+
+Компонент адаптируется под различные размеры экранов:
+- При ширине экрана менее 768px размер полуколец уменьшается до 150px
+- При ширине экрана менее 480px размер полуколец уменьшается до 120px
+
+## Поддержка специальных возможностей
+
+Компонент включает поддержку:
+- ARIA-атрибутов для screen readers
+- Reduced motion для пользователей с вестибулярными расстройствами

@@ -4,6 +4,7 @@
   import Home from './components/Home.svelte';
   import Settings from './components/Settings.svelte';
   import TabBar from './components/TabBar.svelte'; // Import TabBar component
+  import ActivityRingsTest from './components/ActivityRingsTest.svelte'; // Import test component
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js'; // Import TabBar control functions
   
   // State for authentication
@@ -15,7 +16,7 @@
     username: "testuser"
   };
   
-  let currentView = 'splash'; // 'splash', 'home', 'settings'
+  let currentView = 'splash'; // 'splash', 'home', 'settings', 'test'
   
   // Splash screen state
   let showSplash = true;
@@ -135,6 +136,22 @@
     console.log('currentView is now:', currentView);
   }
   
+  // Handle navigation to test page
+  function handleGoToTest() {
+    console.log('handleGoToTest called, setting currentView to test');
+    currentView = 'test';
+    hideTabBar(); // Hide TabBar on test page
+    console.log('currentView is now:', currentView);
+  }
+  
+  // Handle navigation back from test
+  function handleTestBack() {
+    console.log('handleTestBack called, setting currentView to home');
+    currentView = 'home';
+    showTabBar(); // Show TabBar when returning to home
+    console.log('currentView is now:', currentView);
+  }
+  
   // Logout function - now just for testing transitions
   function handleLogout() {
     // Hide TabBar during logout
@@ -217,9 +234,11 @@
     
     <!-- Home Page Component -->
     {#if currentView === 'home'}
-      <Home onLogout={handleLogout} onSettings={handleGoToSettings} />
+      <Home onLogout={handleLogout} onSettings={handleGoToSettings} onTest={handleGoToTest} />
     {:else if currentView === 'settings'}
       <Settings onBack={handleSettingsBack} onLogout={handleLogout} user={user} />
+    {:else if currentView === 'test'}
+      <ActivityRingsTest />
     {/if}
   {/if}
   

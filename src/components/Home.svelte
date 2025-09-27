@@ -1,8 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import Header from './Header.svelte'; // Import the new Header component
-  import ActivityRings from './ActivityRings.svelte'; // Import the Activity Rings component
-  // Removed import for ConcentricActivityPanel as requested
+  import ActivityRings from './ActivityRings.svelte'; // Import the new Activity Rings component
 
   // User data - permanent authentication
   let user = {
@@ -14,6 +13,9 @@
   let isLoading = false; // No loading needed for permanent auth
   export let onLogout; // Function to call when user "logs out" (optional)
   export let onSettings; // Function to call when user wants to go to settings (optional)
+  
+  // Function to navigate to test page (optional)
+  export let onTest = undefined; // Function to call when user wants to go to test page
 
   // Logout function
   function logout() {
@@ -32,6 +34,17 @@
     }
   }
   
+  // Go to test function
+  function goToTest() {
+    console.log('Go to test button clicked');
+    if (onTest) {
+      console.log('Calling onTest function');
+      onTest();
+    } else {
+      console.log('onTest function is not defined');
+    }
+  }
+  
   // Handle calendar button click
   function handleCalendarClick() {
     console.log('Calendar button clicked');
@@ -46,42 +59,16 @@
   <Header title="Главная" showSettingsButton={true} onSettings={goToSettings} />
   
   <!-- Activity Rings Panel -->
-  <div class="activity-panel glass-panel">
-    <!-- Calendar button in top right corner -->
-    <button class="calendar-button" on:click={handleCalendarClick} aria-label="Календарь">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-    </button>
+  <div class="glass-panel activity-panel">
+    <h2 class="panel-title">Прогресс активности</h2>
+    <ActivityRings hasData={true} showWhenNoData={true} />
     
-    <h2 class="panel-title">Ваша активность сегодня</h2>
-    <ActivityRings />
-    
-    <!-- Legend for Activity Rings -->
-    <div class="legend">
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #41B6E6;"></div>
-        <span class="legend-label">Калории</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #db3eb1;"></div>
-        <span class="legend-label">Шаги</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #FFFFFF;"></div>
-        <span class="legend-label">Сон</span>
-      </div>
-    </div>
+    {#if onTest}
+      <button class="test-button" on:click={goToTest}>
+        Перейти к тесту компонента
+      </button>
+    {/if}
   </div>
-  
-  <!-- New Concentric Activity Panel -->
-  <!-- Removed panel with title "Прогресс активности" as requested -->
-  
-  <!-- Daily Activity Panel -->
-  <!-- Removed as requested by user -->
 {:else}
   <!-- This shouldn't happen with permanent auth -->
   <div class="loading">Ошибка загрузки</div>
@@ -117,6 +104,9 @@
   .activity-panel {
     margin-top: 1rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   .panel-title {
@@ -127,61 +117,30 @@
     text-align: center;
   }
   
-  /* Calendar button styles */
-  .calendar-button {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+  .test-button {
     background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    transition: all 0.2s ease;
-  }
-  
-  .calendar-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-  
-  .calendar-button svg {
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
     color: white;
-  }
-  
-  /* Legend styles */
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    min-width: 200px;
     margin-top: 1rem;
   }
   
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .test-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.3);
   }
   
-  .legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-  
-  .legend-label {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9rem;
+  .test-button:active {
+    transform: translateY(0);
   }
   
   /* Page header with title */
