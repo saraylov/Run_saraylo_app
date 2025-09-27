@@ -74,15 +74,32 @@
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
   
-  // Calculate stroke dash offset based on progress (supporting multi-loop)
-  $: strokeDashoffset1 = arcLength1 * (1 - (progress1 % 100) / 100);
-  $: strokeDashoffset2 = arcLength2 * (1 - (progress2 % 100) / 100);
-  $: strokeDashoffset3 = arcLength3 * (1 - (progress3 % 100) / 100);
+  // Calculate stroke dash offset for first layer (0-100%)
+  $: firstLayerProgress1 = Math.min(progress1, 100);
+  $: firstLayerProgress2 = Math.min(progress2, 100);
+  $: firstLayerProgress3 = Math.min(progress3, 100);
+  
+  $: firstLayerOffset1 = arcLength1 * (1 - firstLayerProgress1 / 100);
+  $: firstLayerOffset2 = arcLength2 * (1 - firstLayerProgress2 / 100);
+  $: firstLayerOffset3 = arcLength3 * (1 - firstLayerProgress3 / 100);
+  
+  // Calculate stroke dash offset for second layer (100-200%)
+  $: secondLayerProgress1 = Math.max(0, progress1 - 100);
+  $: secondLayerProgress2 = Math.max(0, progress2 - 100);
+  $: secondLayerProgress3 = Math.max(0, progress3 - 100);
+  
+  $: secondLayerOffset1 = arcLength1 * (1 - secondLayerProgress1 / 100);
+  $: secondLayerOffset2 = arcLength2 * (1 - secondLayerProgress2 / 100);
+  $: secondLayerOffset3 = arcLength3 * (1 - secondLayerProgress3 / 100);
   
   // Get current colors based on progress
-  $: currentColor1 = getProgressColor(ringColors[0], progress1);
-  $: currentColor2 = getProgressColor(ringColors[1], progress2);
-  $: currentColor3 = getProgressColor(ringColors[2], progress3);
+  $: firstLayerColor1 = ringColors[0];
+  $: firstLayerColor2 = ringColors[1];
+  $: firstLayerColor3 = ringColors[2];
+  
+  $: secondLayerColor1 = getProgressColor(ringColors[0], 100); // Darker shade for second layer
+  $: secondLayerColor2 = getProgressColor(ringColors[1], 100);
+  $: secondLayerColor3 = getProgressColor(ringColors[2], 100);
   
   // Pre-calculate the points for the SVG paths (225° to 135°)
   $: startAngle225 = 225;
@@ -232,57 +249,219 @@
       stroke-linecap="round"
     />
     
-    <!-- Progress rings -->
+    <!-- First layer progress rings (0-100%) with glossy effect -->
     <path 
-      class="progress-ring"
+      class="progress-ring first-layer"
       d={`M ${startX1} ${startY1} A ${radius1} ${radius1} 0 1 1 ${endX1} ${endY1}`}
       fill="none"
-      stroke={currentColor1}
+      stroke={firstLayerColor1}
       stroke-width={strokeWidth}
       stroke-linecap="round"
       stroke-dasharray={strokeDasharray1}
-      stroke-dashoffset={strokeDashoffset1}
+      stroke-dashoffset={firstLayerOffset1}
       style="transition: stroke-dashoffset 100ms linear;"
       role="progressbar"
-      aria-valuenow={progress1}
+      aria-valuenow={firstLayerProgress1}
       aria-valuemin="0"
       aria-valuemax="100"
       aria-label="First activity progress"
     />
     
     <path 
-      class="progress-ring"
+      class="progress-ring first-layer"
       d={`M ${startX2} ${startY2} A ${radius2} ${radius2} 0 1 1 ${endX2} ${endY2}`}
       fill="none"
-      stroke={currentColor2}
+      stroke={firstLayerColor2}
       stroke-width={strokeWidth}
       stroke-linecap="round"
       stroke-dasharray={strokeDasharray2}
-      stroke-dashoffset={strokeDashoffset2}
+      stroke-dashoffset={firstLayerOffset2}
       style="transition: stroke-dashoffset 100ms linear;"
       role="progressbar"
-      aria-valuenow={progress2}
+      aria-valuenow={firstLayerProgress2}
       aria-valuemin="0"
       aria-valuemax="100"
       aria-label="Second activity progress"
     />
     
     <path 
-      class="progress-ring"
+      class="progress-ring first-layer"
       d={`M ${startX3} ${startY3} A ${radius3} ${radius3} 0 1 1 ${endX3} ${endY3}`}
       fill="none"
-      stroke={currentColor3}
+      stroke={firstLayerColor3}
       stroke-width={strokeWidth}
       stroke-linecap="round"
       stroke-dasharray={strokeDasharray3}
-      stroke-dashoffset={strokeDashoffset3}
+      stroke-dashoffset={firstLayerOffset3}
       style="transition: stroke-dashoffset 100ms linear;"
       role="progressbar"
-      aria-valuenow={progress3}
+      aria-valuenow={firstLayerProgress3}
       aria-valuemin="0"
       aria-valuemax="100"
       aria-label="Third activity progress"
     />
+    
+    <!-- Glossy overlay for first layer -->
+    <path 
+      class="progress-ring glossy-overlay"
+      d={`M ${startX1} ${startY1} A ${radius1} ${radius1} 0 1 1 ${endX1} ${endY1}`}
+      fill="none"
+      stroke="url(#glossy-gradient-1)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray1}
+      stroke-dashoffset={firstLayerOffset1}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    
+    <path 
+      class="progress-ring glossy-overlay"
+      d={`M ${startX2} ${startY2} A ${radius2} ${radius2} 0 1 1 ${endX2} ${endY2}`}
+      fill="none"
+      stroke="url(#glossy-gradient-2)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray2}
+      stroke-dashoffset={firstLayerOffset2}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    
+    <path 
+      class="progress-ring glossy-overlay"
+      d={`M ${startX3} ${startY3} A ${radius3} ${radius3} 0 1 1 ${endX3} ${endY3}`}
+      fill="none"
+      stroke="url(#glossy-gradient-3)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray3}
+      stroke-dashoffset={firstLayerOffset3}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    
+    <!-- Second layer progress rings (100-200%) - displayed in opposite direction -->
+    {#if secondLayerProgress1 > 0}
+    <path 
+      class="progress-ring second-layer"
+      d={`M ${endX1} ${endY1} A ${radius1} ${radius1} 0 1 0 ${startX1} ${startY1}`}
+      fill="none"
+      stroke={secondLayerColor1}
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray1}
+      stroke-dashoffset={secondLayerOffset1}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    {#if secondLayerProgress2 > 0}
+    <path 
+      class="progress-ring second-layer"
+      d={`M ${endX2} ${endY2} A ${radius2} ${radius2} 0 1 0 ${startX2} ${startY2}`}
+      fill="none"
+      stroke={secondLayerColor2}
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray2}
+      stroke-dashoffset={secondLayerOffset2}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    {#if secondLayerProgress3 > 0}
+    <path 
+      class="progress-ring second-layer"
+      d={`M ${endX3} ${endY3} A ${radius3} ${radius3} 0 1 0 ${startX3} ${startY3}`}
+      fill="none"
+      stroke={secondLayerColor3}
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray3}
+      stroke-dashoffset={secondLayerOffset3}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    <!-- Glossy overlay for second layer -->
+    {#if secondLayerProgress1 > 0}
+    <path 
+      class="progress-ring glossy-overlay-second"
+      d={`M ${endX1} ${endY1} A ${radius1} ${radius1} 0 1 0 ${startX1} ${startY1}`}
+      fill="none"
+      stroke="url(#glossy-gradient-second-1)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray1}
+      stroke-dashoffset={secondLayerOffset1}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    {#if secondLayerProgress2 > 0}
+    <path 
+      class="progress-ring glossy-overlay-second"
+      d={`M ${endX2} ${endY2} A ${radius2} ${radius2} 0 1 0 ${startX2} ${startY2}`}
+      fill="none"
+      stroke="url(#glossy-gradient-second-2)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray2}
+      stroke-dashoffset={secondLayerOffset2}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    {#if secondLayerProgress3 > 0}
+    <path 
+      class="progress-ring glossy-overlay-second"
+      d={`M ${endX3} ${endY3} A ${radius3} ${radius3} 0 1 0 ${startX3} ${startY3}`}
+      fill="none"
+      stroke="url(#glossy-gradient-second-3)"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={strokeDasharray3}
+      stroke-dashoffset={secondLayerOffset3}
+      style="transition: stroke-dashoffset 100ms linear;"
+    />
+    {/if}
+    
+    <!-- Define gradients for glossy effect -->
+    <defs>
+      <linearGradient id="glossy-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.6" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.2" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      
+      <linearGradient id="glossy-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.6" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.2" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      
+      <linearGradient id="glossy-gradient-3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.6" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.2" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      
+      <linearGradient id="glossy-gradient-second-1" x1="100%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.4" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.1" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      
+      <linearGradient id="glossy-gradient-second-2" x1="100%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.4" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.1" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+      
+      <linearGradient id="glossy-gradient-second-3" x1="100%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.4" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.1" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+    </defs>
   </svg>
   
   <button 
@@ -312,7 +491,18 @@
   
   .progress-ring {
     transform-origin: center;
-    /* Remove the rotation transform since we're now calculating the correct start/end points */
+  }
+  
+  .first-layer {
+    /* First layer is drawn normally from 225° to 135° clockwise */
+  }
+  
+  .second-layer {
+    /* Second layer is drawn in opposite direction from 135° to 225° counter-clockwise */
+  }
+  
+  .glossy-overlay, .glossy-overlay-second {
+    mix-blend-mode: overlay;
   }
   
   .test-button {
