@@ -9,24 +9,41 @@
 	function onCentralButtonClick() {
 		dispatch('centralButtonClicked');
 	}
+	
+	// Functions to handle each tab click with specific values
+	function onHomeClick() {
+		dispatch('tabChanged', { tab: 'home' });
+	}
+	
+	function onProfileClick() {
+		dispatch('tabChanged', { tab: 'profile' });
+	}
+	
+	function onAchievementsClick() {
+		dispatch('tabChanged', { tab: 'achievements' });
+	}
+	
+	function onSettingsClick() {
+		dispatch('tabChanged', { tab: 'settings' });
+	}
 </script>
 
 {#if $tabBarVisible}
 	<div class="tab-bar">
 		<div class="tab-group left">
-			<div class="tab-item">
+			<div class="tab-item" on:click={onHomeClick}>
 				<div class="tab-icon">
 					<!-- Home icon -->
 					<img src="/icons/home.png" alt="Home" class="image-icon" />
 				</div>
 				<span class="tab-label">Главная</span>
 			</div>
-			<div class="tab-item">
+			<div class="tab-item" on:click={onProfileClick}>
 				<div class="tab-icon">
 					<!-- Training icon -->
 					<img src="/icons/run.png" alt="Training" class="image-icon" />
 				</div>
-				<span class="tab-label">Здоровье</span>
+				<span class="tab-label">Профиль</span>
 			</div>
 		</div>
 		
@@ -42,19 +59,19 @@
 		</div>
 		
 		<div class="tab-group right">
-			<div class="tab-item">
+			<div class="tab-item" on:click={onAchievementsClick}>
 				<div class="tab-icon">
 					<!-- Achievements icon -->
 					<img src="/icons/achievements.png" alt="Achievements" class="image-icon" />
 				</div>
-				<span class="tab-label">Устройства</span>
+				<span class="tab-label">Достижения</span>
 			</div>
-			<div class="tab-item">
+			<div class="tab-item" on:click={onSettingsClick}>
 				<div class="tab-icon">
 					<!-- Settings icon -->
 					<img src="/icons/settings.png" alt="Settings" class="image-icon" />
 				</div>
-				<span class="tab-label">Профиль</span>
+				<span class="tab-label">Настройки</span>
 			</div>
 		</div>
 	</div>

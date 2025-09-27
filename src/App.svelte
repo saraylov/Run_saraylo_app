@@ -167,6 +167,33 @@
     // You can implement any functionality you want here
   }
   
+  // Handle tab changes from TabBar
+  function handleTabChange(event) {
+    const { tab } = event.detail;
+    console.log('Tab changed to:', tab);
+    
+    switch (tab) {
+      case 'home':
+        currentView = 'home';
+        break;
+      case 'profile':
+        // For now, we'll navigate to home since we don't have a separate profile view
+        currentView = 'home';
+        break;
+      case 'achievements':
+        // For now, we'll navigate to home since we don't have a separate achievements view
+        currentView = 'home';
+        break;
+      case 'settings':
+        currentView = 'settings';
+        break;
+      default:
+        currentView = 'home';
+    }
+    
+    showTabBar(); // Ensure TabBar is visible
+  }
+  
   // Watch for changes in currentView and update TabBar visibility
   $: updateTabBarVisibility();
 </script>
@@ -197,7 +224,7 @@
   {/if}
   
   <!-- Global TabBar component -->
-  <TabBar on:centralButtonClicked={handleCentralButtonClick} />
+  <TabBar on:centralButtonClicked={handleCentralButtonClick} on:tabChanged={handleTabChange} />
 </main>
 
 <style>

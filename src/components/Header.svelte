@@ -32,7 +32,7 @@
   
   {#if showSettingsButton}
     <button class="header-button settings-button" on:click={handleSettings}>
-      <span class="button-icon">⚙️</span>
+      <img src="/icons/settings.png" alt="Settings" class="button-icon-image" />
     </button>
   {:else}
     <div class="button-placeholder"></div>
@@ -115,5 +115,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  
+  .button-icon-image {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
   }
 </style>
