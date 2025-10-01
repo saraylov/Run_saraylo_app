@@ -9,7 +9,7 @@
     first_name: "Тестовый",
     last_name: "Пользователь",
     username: "testuser",
-    avatar: "/images/default-avatar.png", // Default avatar
+    avatar: "./images/default-avatar.png", // Default avatar - changed to relative path
     join_date: "2023-01-15",
     total_steps: 125430,
     achievements: 15,
@@ -120,8 +120,8 @@
 <Header title="Профиль" showSettingsButton={true} showHistoryButton={true} onSettings={onSettings} onHistory={onHistory} />
 
 <div class="profile-container">
-  <!-- Combined User Info and Intensity Zones Section -->
-  <div class="glass-panel user-info-intensity-panel">
+  <!-- Combined User Info, Intensity Zones, and Assessment Results Section -->
+  <div class="glass-panel user-info-intensity-assessment-panel">
     <!-- User Info Section -->
     <div class="user-info-section">
       <div class="user-avatar">
@@ -153,7 +153,7 @@
       {#if intensityZones}
         <div class="zones-container">
           {#each Object.entries(intensityZones.zones) as [key, zone]}
-            <div class="zone-card" style="background-color: {zone.color};">
+            <div class="zone-card" style="background-color: {zone.color};" title="{zone.name}: {zone.averageSpeed.toFixed(1)} км/ч">
               <div class="zone-header">
                 <span class="zone-name">{zone.name}</span>
                 <span class="zone-percentage">{zone.percentage}</span>
@@ -186,30 +186,30 @@
         </div>
       {/if}
     </div>
-  </div>
-  
-  <!-- Assessment Results Section -->
-  <div class="glass-panel assessment-results-panel">
-    <h3 class="panel-title">Результаты оценочных тренировок</h3>
-    <div class="assessment-results-container">
-      {#each assessmentResults as result, index}
-        <div class="assessment-result-card">
-          <div class="assessment-header">
-            <span class="assessment-date">{result.date}</span>
-            <span class="assessment-type">{result.type}</span>
-          </div>
-          <div class="color-panels-container">
-            {#each result.segments as segment, i}
-              <div class="color-panel" style="background-color: {segment.color};" title="{segment.name}: {segment.avgSpeed} км/ч">
-                <div class="panel-content">
-                  <div class="segment-name">{segment.name}</div>
-                  <div class="segment-speed">{segment.avgSpeed} км/ч</div>
+    
+    <!-- Assessment Results Section -->
+    <div class="assessment-results-section">
+      <h3 class="panel-title">Результаты оценочных тренировок</h3>
+      <div class="assessment-results-container">
+        {#each assessmentResults as result, index}
+          <div class="assessment-result-card">
+            <div class="assessment-header">
+              <span class="assessment-date">{result.date}</span>
+              <span class="assessment-type">{result.type}</span>
+            </div>
+            <div class="color-panels-container">
+              {#each result.segments as segment, i}
+                <div class="color-panel" style="background-color: {segment.color};" title="{segment.name}: {segment.avgSpeed} км/ч">
+                  <div class="panel-content">
+                    <div class="segment-name">{segment.name}</div>
+                    <div class="segment-speed">{segment.avgSpeed} км/ч</div>
+                  </div>
                 </div>
-              </div>
-            {/each}
+              {/each}
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     </div>
   </div>
   
@@ -247,8 +247,8 @@
     overflow: hidden;
   }
   
-  /* Combined User Info and Intensity Zones Panel */
-  .user-info-intensity-panel {
+  /* Combined User Info, Intensity Zones, and Assessment Results Panel */
+  .user-info-intensity-assessment-panel {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -332,6 +332,14 @@
   }
   
   .intensity-zones-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .assessment-results-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
