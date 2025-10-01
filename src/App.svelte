@@ -9,6 +9,7 @@
   import Exercises from './components/Exercises.svelte';
   import Training from './components/Training.svelte';
   import TabBar from './components/TabBar.svelte';
+  import ExercisesTabBar from './components/ExercisesTabBar.svelte';
   import ActivityRingsTest from './components/ActivityRingsTest.svelte';
   import History from './components/History.svelte';
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js';
@@ -350,7 +351,13 @@
   
   <!-- Global TabBar component - hidden on training page -->
   {#if currentView !== 'training'}
-    <TabBar on:centralButtonClicked={handleCentralButtonClick} on:tabChanged={handleTabChange} />
+    {#if currentView === 'exercises'}
+      <!-- Use custom ExercisesTabBar on Exercises page -->
+      <ExercisesTabBar on:startTraining={handleGoToTraining} on:tabChanged={handleTabChange} />
+    {:else}
+      <!-- Use regular TabBar on other pages -->
+      <TabBar on:centralButtonClicked={handleCentralButtonClick} on:tabChanged={handleTabChange} />
+    {/if}
   {/if}
 </main>
 

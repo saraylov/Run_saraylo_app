@@ -3,6 +3,7 @@
   import Header from './Header.svelte';
   import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
   import { navigationContext } from '../lib/viewTransition.js';
+  import ExercisesTabBar from './ExercisesTabBar.svelte'; // Import the new Exercises TabBar
 
   // Props using Svelte 5 runes
   const { onBack, onSettings, onTraining } = $props();
@@ -300,6 +301,25 @@
     }
   }
 
+  // Function to handle start training event from ExercisesTabBar
+  function handleStartTraining() {
+    startTraining();
+  }
+  
+  // Function to handle tab change events from ExercisesTabBar
+  function handleTabChange(event) {
+    const { tab } = event.detail;
+    // Dispatch event to parent component to handle navigation
+    if (tab === 'exercises') {
+      // If clicking on exercises tab, do nothing as we're already on this page
+      return;
+    }
+    // For other tabs, call the onSettings function which handles navigation
+    if (onSettings) {
+      onSettings();
+    }
+  }
+  
   // Load favorites from localStorage on component mount
   onMount(() => {
     try {
@@ -389,14 +409,8 @@
     {/if}
   </div>
 
-  <!-- Start Training Button -->
-  <button 
-    class="start-training-button {(!selectedCategory || !selectedWorkout) ? 'disabled' : ''}"
-    on:click={startTraining}
-    disabled={!selectedCategory || !selectedWorkout}
-  >
-    К тренировке
-  </button>
+
+
 </div>
 
 <style>
