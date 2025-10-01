@@ -1,0 +1,327 @@
+<script>
+  import { onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte'; // Import createEventDispatcher
+  import Header from './Header.svelte';
+  import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
+  import mapboxgl from 'mapbox-gl';
+  import { hideTabBar, showTabBar } from '../lib/tabBarStore.js'; // Import TabBar control functions
+  import intensityZoneService from '../lib/intensityZoneService.js'; // Import Intensity Zone Service
+  import TrainingTabBar from './TrainingTabBar.svelte'; // Import the new Training TabBar
+
+  // Create event dispatcher for communicating with parent components
+  const dispatch = createEventDispatcher();
+
+  // Mapbox access token
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia29tbXVuMTV0IiwiYSI6ImNtZmk1ZzlsNTBoejAybHF3ejR6bjEwZ3oifQ.GHO6tJYDnc03P7fxUshk8A';
+
+  // Initialize training data with default values
+  let training = {
+    id: 1,
+    name: "Утренняя тренировка",
+    type: "running",
+    duration: 30,
+    calories: 320,
+    intensity: "high",
+    icon: "/icons/run.png",
+    startTime: "2023-06-15T08:30:00",
+    endTime: "2023-06-15T09:00:00",
+    completed: false,
+    exercises: [
+      {
+        id: 1,
+        name: "Разминка",
+        duration: 5,
+        calories: 50,
+        completed: true
+      },
+      {
+        id: 2,
+        name: "Бег на дорожке",
+        duration: 20,
+        calories: 250,
+        completed: false
+      },
+      {
+        id: 3,
+        name: "Заминка",
+        duration: 5,
+        calories: 20,
+        completed: false
+      }
+    ]
+  };
+
+  // Define segment patterns for different workout types
+  const workoutSegments = {
+    // Assessment workouts - fixed sequence
+    assessment_run: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 1 }
+    ],
+    assessment_treadmill: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 1 }
+    ],
+    assessment_cycling: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 1 }
+    ],
+    assessment_walking: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 1 }
+    ],
+    assessment_nordic: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 1 }
+    ],
+    // Example custom workout with flexible sequence
+    cardio: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 5 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 10 },
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 2 }
+    ],
+    cardio_treadmill: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 5 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 10 },
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 5 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 5 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 2 }
+    ],
+    timed_run: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 8 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 12 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 10 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 8 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 7 }
+    ],
+    timed_treadmill: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 8 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 12 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 10 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 8 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 7 }
+    ],
+    timed_cycling: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 8 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 12 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 10 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 8 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 7 }
+    ],
+    timed_walking: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 8 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 12 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 10 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 8 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 7 }
+    ],
+    timed_nordic: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 8 },
+      { id: 2, name: 'Салатовый', color: '#90EE90', duration: 12 },
+      { id: 3, name: 'Желтый', color: '#FFD700', duration: 10 },
+      { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 8 },
+      { id: 5, name: 'Красный', color: '#FF0000', duration: 7 }
+    ],
+    // Free workouts - fully blue timeline
+    free_run: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+    ],
+    free_treadmill: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+    ],
+    free_cycling: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+    ],
+    free_walking: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+    ],
+    free_nordic: [
+      { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+    ]
+  };
+
+  // Icon mapping based on category
+  const categoryIcons = {
+    'running': '/icons/run.png',
+    'treadmill': '/icons/treadmill.png',
+    'cycling': '/icons/cycling.png',
+    'walking': '/icons/walking.png',
+    'nordic_walking': '/icons/walking.png'
+  };
+
+  // Function to get segments for a workout
+  function getWorkoutSegments(workoutId) {
+    // Check if there are predefined segments for this workout
+    if (workoutSegments[workoutId]) {
+      return workoutSegments[workoutId];
+    }
+    
+    // For free workouts, return a single blue segment
+    if (workoutId && workoutId.includes('free')) {
+      return [
+        { id: 1, name: 'Голубой', color: '#41B6E6', duration: 10 }
+      ];
+    }
+    
+    // For other workouts without predefined segments, return empty array
+    return [];
+  }
+
+  // Workout duration mapping based on workout type
+  const workoutDurations = {
+    'free_run': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio': { duration: 30, calories: 320, intensity: "high" },
+    'timed_run': { duration: 45, calories: 450, intensity: "high" },
+    'assessment_run': { duration: 20, calories: 200, intensity: "medium" },
+    'free_treadmill': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio_treadmill': { duration: 30, calories: 300, intensity: "high" },
+    'timed_treadmill': { duration: 45, calories: 420, intensity: "high" },
+    'assessment_treadmill': { duration: 20, calories: 180, intensity: "medium" },
+    'free_cycling': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio_cycling': { duration: 30, calories: 280, intensity: "high" },
+    'timed_cycling': { duration: 45, calories: 400, intensity: "high" },
+    'assessment_cycling': { duration: 20, calories: 160, intensity: "medium" },
+    'free_walking': { duration: 0, calories: 0, intensity: "low" }, // Free workout - no fixed duration
+    'cardio_walking': { duration: 30, calories: 180, intensity: "medium" },
+    'timed_walking': { duration: 45, calories: 250, intensity: "medium" },
+    'assessment_walking': { duration: 20, calories: 100, intensity: "low" },
+    'free_nordic': { duration: 0, calories: 0, intensity: "low" }, // Free workout - no fixed duration
+    'cardio_nordic': { duration: 30, calories: 220, intensity: "medium" },
+    'timed_nordic': { duration: 45, calories: 320, intensity: "medium" },
+    'assessment_nordic': { duration: 20, calories: 140, intensity: "low" }
+  };
+
+  // Try to load selected training data from localStorage
+  onMount(() => {
+    try {
+      const savedTraining = localStorage.getItem('selectedTraining');
+      if (savedTraining) {
+        const trainingData = JSON.parse(savedTraining);
+        // Update training object with selected data
+        if (trainingData.category && trainingData.workout) {
+          training.name = `${trainingData.category.name} - ${trainingData.workout.name}`;
+          training.type = trainingData.category.id;
+          
+          // Set icon based on category
+          training.icon = categoryIcons[trainingData.category.id] || '/icons/run.png';
+          
+          // Set duration, calories, and intensity based on workout type
+          const workoutInfo = workoutDurations[trainingData.workout.id];
+          if (workoutInfo) {
+            training.duration = workoutInfo.duration;
+            // For free workouts (duration = 0), set calories to 0 as well
+            training.calories = workoutInfo.duration === 0 ? 0 : workoutInfo.calories;
+            training.intensity = workoutInfo.intensity;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load selected training from localStorage:', e);
+    }
+    
+    initializeMap();
+  });
+
+  // Training state
+  let trainingStarted = false;
+  let trainingPaused = false;
+  let startTime = null;
+  let elapsedTime = 0;
+  let distance = 0;
+  let speed = 0;
+  
+  // Timer interval
+  let timerInterval = null;
+
+  // Mock real-time training stats
+  let trainingStats = {
+    time: "00:00:00",
+    distance: "0.0 km",
+    speed: "0.0 km/h",
+    avgSpeed: "0.0 km/h",
+    maxSpeed: "0.0 km/h",
+    pace: "0:00 /km",
+    calories: "0 kcal",
+    steps: "0"
+  };
+
+  // Cumulative values that should only increase
+  let totalDistance = 0; // in km
+  let totalSteps = 0; // count
+  let totalCalories = 0; // count
+  let lastUpdateTime = 0; // for calculating increments
+  
+  // Segment tracking
+  let currentWorkoutSegments = [];
+  let currentSegmentIndex = 0;
+  let currentSegmentTime = 0; // Time spent in current segment (seconds)
+  let segmentSpeeds = []; // To store speed data for each segment
+
+  // Final workout data (to be shown in modal)
+  let finalWorkoutData = null;
+  
+  // Modal state
+  let showModal = false;
+
+  // Map variables
+  let mapContainer;
+  let map;
+  let geolocateControl;
+  let routeCoordinates = [];
+  let routeSourceId = 'route-source';
+  let routeLayerId = 'route-layer';
+
+  // Function to format time
+  function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Function to get intensity color
+  function getIntensityColor(intensity) {
+    switch (intensity) {
+      case 'low': return '#41B6E6'; // Miami Blue
+      case 'medium': return '#FFD700'; // Gold
+      case 'high': return '#db3eb1'; // Miami Pink
+      default: return '#FFFFFF';
+    }
+  }
+
+  // Function to toggle exercise completion
+  function toggleExerciseCompletion(exerciseId) {
+    const exercise = training.exercises.find(e => e.id === exerciseId);
+    if (exercise) {
+      exercise.completed = !exercise.completed;
+    }
+  }
+
+  // Function to format elapsed time as HH:MM:SS
+  function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().pad

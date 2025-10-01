@@ -1,0 +1,480 @@
+/* History Component Styles */
+
+.history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.25rem 0;
+  margin-top: 80px; /* Space for fixed header */
+}
+
+/* Glass panel effect - consistent with app styling */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.12); /* Increased opacity for thicker appearance */
+  backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+  -webkit-backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+  border: 0.125rem solid rgba(255, 255, 255, 0.25); /* Thicker border */
+  border-radius: 1.5rem; /* Slightly increased radius */
+  padding: 1.5rem; /* Increased padding */
+  box-shadow: 
+    0 0.75rem 3rem rgba(0, 0, 0, 0.3), /* Enhanced shadow */
+    inset 0 0 2rem rgba(255, 255, 255, 0.2), /* Inner glow for thickness */
+    inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15), /* Bottom inner light */
+    inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2); /* Top inner light */
+  position: relative;
+  z-index: 15;
+  overflow: hidden;
+}
+
+.section-title {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.3rem;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.subsection-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.filter-section {
+  padding: 1rem;
+}
+
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.filter-select {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(0.3125rem);
+  -webkit-backdrop-filter: blur(0.3125rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  color: white;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 120px;
+}
+
+.filter-button {
+  background: linear-gradient(90deg, #41B6E6, #db3eb1);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.comparison-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.comparison-button {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(0.3125rem);
+  -webkit-backdrop-filter: blur(0.3125rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.comparison-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.comparison-button.active {
+  background: linear-gradient(90deg, #41B6E6, #db3eb1);
+}
+
+.comparison-button.primary {
+  background: linear-gradient(90deg, #34C759, #41B6E6);
+}
+
+.history-list, .detail-view {
+  min-height: 300px;
+}
+
+.no-history {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.no-history p {
+  margin: 0.5rem 0;
+}
+
+.workouts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workout-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  backdrop-filter: blur(0.3125rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workout-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.workout-item.selectable {
+  cursor: pointer;
+}
+
+.workout-item.selected {
+  background: linear-gradient(90deg, #41B6E6, #db3eb1);
+  color: white;
+  border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+}
+
+.workout-summary {
+  flex: 1;
+}
+
+.workout-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.workout-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.workout-date {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.workout-metrics {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.metric-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.selection-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workout-item.selected .selection-indicator {
+  border-color: white;
+  background: white;
+}
+
+.checkmark {
+  color: #db3eb1;
+  font-weight: bold;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-date {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  backdrop-filter: blur(0.3125rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-card .metric-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.25rem;
+}
+
+.metric-card .metric-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.timeline-section {
+  margin-top: 1rem;
+}
+
+.progress-section {
+  padding: 1rem;
+}
+
+.progress-charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-title {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.chart {
+  display: flex;
+  align-items: end;
+  justify-content: space-around;
+  height: 150px;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.chart-bar {
+  flex: 1;
+  min-width: 20px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+}
+
+.chart-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 20px;
+}
+
+/* Comparison View Styles */
+.comparison-view {
+  padding: 1rem;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.workout-info {
+  flex: 1;
+}
+
+.workout-info .workout-title {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.workout-info .workout-date {
+  font-size: 0.9rem;
+}
+
+.vs {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #db3eb1;
+}
+
+.metrics-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.metric-value {
+  text-align: center;
+  font-weight: 500;
+}
+
+.metric-diff {
+  text-align: center;
+  font-weight: 600;
+}
+
+.metric-diff.positive {
+  color: #34C759; /* Green for improvement */
+}
+
+.metric-diff.negative {
+  color: #FF3B30; /* Red for decline */
+}
+
+.timeline-comparison {
+  margin-top: 1rem;
+}
+
+.timelines-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.timeline-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 48rem) { /* 768px */
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .progress-charts {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .metric-label {
+    grid-column: 1 / -1;
+  }
+  
+  .comparison-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .vs {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 30rem) { /* 480px */
+  .history-container {
+    padding: 0.75rem 0;
+    gap: 0.75rem;
+  }
+  
+  .glass-panel {
+    padding: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+  }
+  
+  .workout-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .workout-date {
+    align-self: flex-end;
+  }
+}

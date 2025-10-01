@@ -1,0 +1,980 @@
+<script>
+  import { onMount, onDestroy } from 'svelte';
+  import Header from './Header.svelte';
+  import mapboxgl from 'mapbox-gl';
+  import { hideTabBar, showTabBar } from '../lib/tabBarStore.js';
+
+  // Mapbox access token
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia29tbXVuMTV0IiwiYSI6ImNtZmk1ZzlsNTBoejAybHF3ejR6bjEwZ3oifQ.GHO6tJYDnc03P7fxUshk8A';
+
+  // Initialize training data with default values
+  let training = {
+    id: 1,
+    name: "Утренняя тренировка",
+    type: "running",
+    duration: 30,
+    calories: 320,
+    intensity: "high",
+    icon: "/icons/run.png",
+    startTime: "2023-06-15T08:30:00",
+    endTime: "2023-06-15T09:00:00",
+    completed: false,
+    exercises: [
+      {
+        id: 1,
+        name: "Разминка",
+        duration: 5,
+        calories: 50,
+        completed: true
+      },
+      {
+        id: 2,
+        name: "Бег на дорожке",
+        duration: 20,
+        calories: 250,
+        completed: false
+      },
+      {
+        id: 3,
+        name: "Заминка",
+        duration: 5,
+        calories: 20,
+        completed: false
+      }
+    ]
+  };
+
+  // Workout duration mapping based on workout type
+  const workoutDurations = {
+    'free_run': { duration: 0, calories: 0, intensity: "medium" },
+    'cardio': { duration: 30, calories: 320, intensity: "high" },
+    'timed_run': { duration: 45, calories: 450, intensity: "high" },
+    'assessment_run': { duration: 20, calories: 200, intensity: "medium" },
+    'free_treadmill': { duration: 0, calories: 0, intensity: "medium" },
+    'cardio_treadmill': { duration: 30, calories: 300, intensity: "high" },
+    'timed_treadmill': { duration: 45, calories: 420, intensity: "high" },
+    'assessment_treadmill': { duration: 20, calories: 180, intensity: "medium" },
+    'free_cycling': { duration: 0, calories: 0, intensity: "medium" },
+    'cardio_cycling': { duration: 30, calories: 280, intensity: "high" },
+    'timed_cycling': { duration: 45, calories: 400, intensity: "high" },
+    'assessment_cycling': { duration: 20, calories: 160, intensity: "medium" },
+    'free_walking': { duration: 0, calories: 0, intensity: "low" },
+    'cardio_walking': { duration: 30, calories: 180, intensity: "medium" },
+    'timed_walking': { duration: 45, calories: 250, intensity: "medium" },
+    'assessment_walking': { duration: 20, calories: 100, intensity: "low" },
+    'free_nordic': { duration: 0, calories: 0, intensity: "low" },
+    'cardio_nordic': { duration: 30, calories: 220, intensity: "medium" },
+    'timed_nordic': { duration: 45, calories: 320, intensity: "medium" },
+    'assessment_nordic': { duration: 20, calories: 140, intensity: "low" }
+  };
+
+  // Icon mapping based on category
+  const categoryIcons = {
+    'running': '/icons/run.png',
+    'treadmill': '/icons/treadmill.png',
+    'cycling': '/icons/cycling.png',
+    'walking': '/icons/walking.png',
+    'nordic_walking': '/icons/walking.png'
+  };
+
+  // Assessment workout segments with colors and durations
+  const assessmentSegments = [
+    { id: 1, name: 'Голубой', color: '#41B6E6', duration: 6, description: 'Начало тренировки' },
+    { id: 2, name: 'Салатовый', color: '#90EE90', duration: 5, description: 'Умеренная интенсивность' },
+    { id: 3, name: 'Желтый', color: '#FFD700', duration: 5, description: 'Повышение интенсивности' },
+    { id: 4, name: 'Оранжевый', color: '#FFA500', duration: 3, description: 'Высокая интенсивность' },
+    { id: 5, name: 'Красный', color: '#FF0000', duration: 1, description: 'Максимальная интенсивность' }
+  ];
+
+  // Total workout duration
+  const totalAssessmentDuration = assessmentSegments.reduce((sum, segment) => sum + segment.duration, 0); // 20 minutes
+
+  // Check if this is an assessment workout
+  let isAssessmentWorkout = false;
+
+  // Assessment workout state
+  let isAssessmentRunning = false;
+  let isAssessmentPaused = false;
+  let assessmentElapsedTime = 0; // in seconds
+  let currentAssessmentSegment = 0;
+  let assessmentTimerInterval = null;
+
+  // Try to load selected training data from localStorage
+  onMount(() => {
+    try {
+      const savedTraining = localStorage.getItem('selectedTraining');
+      if (savedTraining) {
+        const trainingData = JSON.parse(savedTraining);
+        if (trainingData.category && trainingData.workout) {
+          training.name = `${trainingData.category.name} - ${trainingData.workout.name}`;
+          training.type = trainingData.category.id;
+          
+          training.icon = categoryIcons[trainingData.category.id] || '/icons/run.png';
+          
+          const workoutInfo = workoutDurations[trainingData.workout.id];
+          if (workoutInfo) {
+            training.duration = workoutInfo.duration;
+            training.calories = workoutInfo.duration === 0 ? 0 : workoutInfo.calories;
+            training.intensity = workoutInfo.intensity;
+          }
+          
+          isAssessmentWorkout = trainingData.workout.id.includes('assessment');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load selected training from localStorage:', e);
+    }
+    
+    if (!isAssessmentWorkout) {
+      initializeMap();
+    }
+  });
+
+  // Training state
+  let trainingStarted = false;
+  let trainingPaused = false;
+  let startTime = null;
+  let elapsedTime = 0;
+  let distance = 0;
+  let speed = 0;
+  
+  let timerInterval = null;
+
+  // Mock real-time training stats
+  let trainingStats = {
+    time: "00:00:00",
+    distance: "0.0 km",
+    speed: "0.0 km/h",
+    avgSpeed: "0.0 km/h",
+    maxSpeed: "0.0 km/h",
+    pace: "0:00 /km",
+    calories: "0 kcal",
+    steps: "0"
+  };
+
+  // Map variables
+  let mapContainer;
+  let map;
+  let geolocateControl;
+  let routeCoordinates = [];
+  let routeSourceId = 'route-source';
+  let routeLayerId = 'route-layer';
+
+  // Function to format time
+  function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Function to get intensity color
+  function getIntensityColor(intensity) {
+    switch (intensity) {
+      case 'low': return '#41B6E6';
+      case 'medium': return '#FFD700';
+      case 'high': return '#db3eb1';
+      default: return '#FFFFFF';
+    }
+  }
+
+  // Function to toggle exercise completion
+  function toggleExerciseCompletion(exerciseId) {
+    const exercise = training.exercises.find(e => e.id === exerciseId);
+    if (exercise) {
+      exercise.completed = !exercise.completed;
+    }
+  }
+
+  // Function to format elapsed time as HH:MM:SS
+  function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // Function to update training stats
+  function updateTrainingStats() {
+    if (!trainingStarted || trainingPaused) return;
+    
+    const currentTime = new Date().getTime();
+    elapsedTime = currentTime - startTime;
+    trainingStats.time = formatElapsedTime(elapsedTime);
+    
+    const seconds = elapsedTime / 1000;
+    const minutes = seconds / 60;
+    
+    const baseSpeed = 10;
+    const speedVariation = 5 * Math.sin(seconds * 0.1);
+    speed = baseSpeed + speedVariation;
+    
+    if (speed < 0) speed = 0;
+    
+    distance = (speed * minutes) / 60;
+    
+    trainingStats.distance = `${distance.toFixed(2)} km`;
+    trainingStats.speed = `${speed.toFixed(1)} km/h`;
+    
+    const hours = elapsedTime / (1000 * 60 * 60);
+    if (hours > 0) {
+      trainingStats.avgSpeed = `${(distance / hours).toFixed(1)} km/h`;
+    } else {
+      trainingStats.avgSpeed = "0.0 km/h";
+    }
+    
+    const currentMaxSpeed = parseFloat(trainingStats.maxSpeed);
+    if (speed > currentMaxSpeed) {
+      trainingStats.maxSpeed = `${speed.toFixed(1)} km/h`;
+    }
+    
+    if (speed > 0) {
+      const paceMinutes = 60 / speed;
+      const mins = Math.floor(paceMinutes);
+      const secs = Math.floor((paceMinutes - mins) * 60);
+      trainingStats.pace = `${mins}:${secs.toString().padStart(2, '0')} /km`;
+    } else {
+      trainingStats.pace = "0:00 /km";
+    }
+    
+    let metValue = 0;
+    if (speed < 8) {
+      metValue = 8.0;
+    } else if (speed < 10) {
+      metValue = 10.0;
+    } else if (speed < 12) {
+      metValue = 12.0;
+    } else {
+      metValue = 14.0;
+    }
+    
+    const weight = 70;
+    const calories = Math.floor(metValue * weight * hours);
+    trainingStats.calories = `${calories} kcal`;
+    
+    let stepsPerKm = 0;
+    if (speed < 6) {
+      stepsPerKm = 1800;
+    } else if (speed < 10) {
+      stepsPerKm = 1600;
+    } else if (speed < 14) {
+      stepsPerKm = 1500;
+    } else {
+      stepsPerKm = 1400;
+    }
+    
+    const steps = Math.floor(distance * stepsPerKm);
+    trainingStats.steps = `${steps.toLocaleString()}`;
+  }
+
+  // Long press variables
+  let pressTimer = null;
+  let pressProgress = 0;
+  let isPressing = false;
+  let startButtonElement;
+  let finishButtonElement;
+
+  // Function to handle long press start
+  function handlePressStart() {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    const startTime = Date.now();
+    const duration = 2500;
+    
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(1, elapsed / duration);
+      
+      if (startButtonElement) {
+        const scale = 1 + (0.5 * pressProgress);
+        startButtonElement.style.transform = `scale(${scale})`;
+      }
+      
+      if (elapsed >= duration) {
+        clearInterval(pressTimer);
+        pressTimer = null;
+        isPressing = false;
+        pressProgress = 1;
+        
+        if (isAssessmentWorkout) {
+          startAssessmentWorkout();
+        } else {
+          startTraining();
+        }
+      }
+    }, 10);
+  }
+
+  // Function to handle press end/cancel
+  function handlePressEnd() {
+    if (!isPressing) return;
+    
+    isPressing = false;
+    
+    if (pressTimer) {
+      clearInterval(pressTimer);
+      pressTimer = null;
+    }
+    
+    if (startButtonElement) {
+      startButtonElement.style.transform = 'scale(1)';
+    }
+    
+    pressProgress = 0;
+  }
+
+  // Function to handle long press start for finish button
+  function handleFinishPressStart() {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    const startTime = Date.now();
+    const duration = 2500;
+    
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(1, elapsed / duration);
+      
+      if (finishButtonElement) {
+        const scale = 1 + (0.5 * pressProgress);
+        finishButtonElement.style.transform = `scale(${scale})`;
+      }
+      
+      if (elapsed >= duration) {
+        clearInterval(pressTimer);
+        pressTimer = null;
+        isPressing = false;
+        pressProgress = 1;
+        
+        if (isAssessmentWorkout) {
+          finishAssessmentWorkout();
+        } else {
+          finishTraining();
+        }
+      }
+    }, 10);
+  }
+
+  // Function to handle press end/cancel for finish button
+  function handleFinishPressEnd() {
+    if (!isPressing) return;
+    
+    isPressing = false;
+    
+    if (pressTimer) {
+      clearInterval(pressTimer);
+      pressTimer = null;
+    }
+    
+    if (finishButtonElement) {
+      finishButtonElement.style.transform = 'scale(1)';
+    }
+    
+    pressProgress = 0;
+  }
+
+  // Function to start training
+  function startTraining() {
+    trainingStarted = true;
+    trainingPaused = false;
+    startTime = new Date().getTime() - elapsedTime;
+    
+    hideTabBar();
+    
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTrainingStats, 1000);
+    
+    if (!isAssessmentWorkout && geolocateControl) {
+      geolocateControl.trigger();
+    }
+    
+    console.log('Тренировка начата');
+  }
+
+  // Function to pause training
+  function pauseTraining() {
+    trainingPaused = !trainingPaused;
+    
+    if (trainingPaused) {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      console.log('Тренировка приостановлена');
+    } else {
+      startTime = new Date().getTime() - elapsedTime;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTrainingStats, 1000);
+      console.log('Тренировка возобновлена');
+    }
+  }
+
+  // Function to finish training
+  function finishTraining() {
+    trainingStarted = false;
+    trainingPaused = false;
+    
+    showTabBar();
+    
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    
+    elapsedTime = 0;
+    distance = 0;
+    speed = 0;
+    
+    trainingStats.time = "00:00:00";
+    trainingStats.distance = "0.0 km";
+    trainingStats.speed = "0.0 km/h";
+    trainingStats.avgSpeed = "0.0 km/h";
+    trainingStats.maxSpeed = "0.0 km/h";
+    trainingStats.pace = "0:00 /km";
+    trainingStats.calories = "0 kcal";
+    trainingStats.steps = "0";
+    
+    if (!isAssessmentWorkout) {
+      routeCoordinates = [];
+      if (map && map.getSource(routeSourceId)) {
+        map.getSource(routeSourceId).setData({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: []
+          }
+        });
+      }
+    }
+    
+    console.log('Тренировка завершена');
+  }
+
+  // Format time as MM:SS
+  function formatAssessmentTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Get current segment based on elapsed time
+  function getCurrentAssessmentSegment(elapsedSeconds) {
+    let accumulatedTime = 0;
+    for (let i = 0; i < assessmentSegments.length; i++) {
+      accumulatedTime += assessmentSegments[i].duration * 60; // Convert minutes to seconds
+      if (elapsedSeconds < accumulatedTime) {
+        return i;
+      }
+    }
+    return assessmentSegments.length - 1; // Return last segment if time exceeds total
+  }
+
+  // Start the assessment workout
+  function startAssessmentWorkout() {
+    isAssessmentRunning = true;
+    isAssessmentPaused = false;
+    hideTabBar();
+    
+    if (assessmentTimerInterval) clearInterval(assessmentTimerInterval);
+    assessmentTimerInterval = setInterval(() => {
+      if (!isAssessmentPaused) {
+        assessmentElapsedTime += 1;
+        currentAssessmentSegment = getCurrentAssessmentSegment(assessmentElapsedTime);
+        
+        // Check if workout is complete
+        if (assessmentElapsedTime >= totalAssessmentDuration * 60) {
+          finishAssessmentWorkout();
+        }
+      }
+    }, 1000);
+  }
+
+  // Pause the assessment workout
+  function pauseAssessmentWorkout() {
+    isAssessmentPaused = !isAssessmentPaused;
+  }
+
+  // Finish the assessment workout
+  function finishAssessmentWorkout() {
+    isAssessmentRunning = false;
+    isAssessmentPaused = false;
+    if (assessmentTimerInterval) {
+      clearInterval(assessmentTimerInterval);
+      assessmentTimerInterval = null;
+    }
+    showTabBar();
+  }
+
+  // Reset the assessment workout
+  function resetAssessmentWorkout() {
+    if (assessmentTimerInterval) {
+      clearInterval(assessmentTimerInterval);
+      assessmentTimerInterval = null;
+    }
+    isAssessmentRunning = false;
+    isAssessmentPaused = false;
+    assessmentElapsedTime = 0;
+    currentAssessmentSegment = 0;
+    showTabBar();
+  }
+
+  // Export functions for parent component
+  export let onBack;
+  export let onSettings;
+
+  // Initialize the Mapbox map
+  function initializeMap() {
+    if (!mapContainer || isAssessmentWorkout) return;
+    
+    map = new mapboxgl.Map({
+      container: mapContainer,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [30.5234, 50.4501],
+      zoom: 14
+    });
+
+    const nav = new mapboxgl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+    });
+    map.addControl(nav, 'top-right');
+
+    geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+    map.addControl(geolocateControl, 'top-left');
+
+    map.on('load', () => {
+      geolocateControl.on('geolocate', (position) => {
+        if (!trainingStarted) return;
+        
+        const { longitude, latitude } = position.coords;
+        const newCoordinate = [longitude, latitude];
+        
+        routeCoordinates.push(newCoordinate);
+        
+        if (map.getSource(routeSourceId)) {
+          map.getSource(routeSourceId).setData({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: routeCoordinates
+            }
+          });
+        } else {
+          map.addSource(routeSourceId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates
+              }
+            }
+          });
+          
+          map.addLayer({
+            id: routeLayerId,
+            type: 'line',
+            source: routeSourceId,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#db3eb1',
+              'line-width': 5,
+              'line-opacity': 0.75
+            }
+          });
+        }
+        
+        map.easeTo({
+          center: newCoordinate,
+          zoom: 16,
+          duration: 1000
+        });
+      });
+
+      geolocateControl.on('error', (error) => {
+        console.error('Geolocation error:', error);
+        alert('Не удалось получить ваше местоположение. Пожалуйста, проверьте настройки браузера.');
+      });
+    });
+  }
+
+  // Cleanup on destroy
+  onDestroy(() => {
+    if (assessmentTimerInterval) {
+      clearInterval(assessmentTimerInterval);
+    }
+    showTabBar();
+  });
+</script>
+
+<Header title="Тренировка" showSettingsButton={false} onSettings={onSettings} onBack={onBack} />
+
+<div class="training-container">
+  {#if isAssessmentWorkout}
+    <!-- Assessment Workout Visualization -->
+    <div class="glass-panel workout-info">
+      <h2 class="workout-title">Оценочная тренировка</h2>
+      <div class="workout-duration">20 мин</div>
+    </div>
+
+    <!-- Timeline visualization -->
+    <div class="glass-panel timeline-container">
+      <h3 class="section-title">Прогресс тренировки</h3>
+      
+      <!-- Progress bar -->
+      <div class="progress-bar">
+        {#each assessmentSegments as segment, i}
+          <div 
+            class="segment {i === currentAssessmentSegment && isAssessmentRunning ? 'active' : ''} {i < currentAssessmentSegment ? 'completed' : ''}"
+            style={`flex: ${segment.duration}; background-color: ${segment.color};`}
+          >
+            {#if i === currentAssessmentSegment && isAssessmentRunning}
+              <div class="segment-progress" style={`background-color: ${segment.color};`}></div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+      
+      <!-- Time indicators -->
+      <div class="time-indicators">
+        <span>0:00</span>
+        <span>{formatAssessmentTime(totalAssessmentDuration * 60)}</span>
+      </div>
+      
+      <!-- Current time and segment info -->
+      <div class="current-info">
+        <div class="current-time">{formatAssessmentTime(assessmentElapsedTime)}</div>
+        <div class="current-segment">
+          {#if isAssessmentRunning}
+            <span class="segment-name" style={`color: ${assessmentSegments[currentAssessmentSegment]?.color || '#FFFFFF'};`}>
+              {assessmentSegments[currentAssessmentSegment]?.name || 'Завершение'} этап
+            </span>
+          {:else}
+            <span class="segment-name">Готовы начать?</span>
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="glass-panel legend-container">
+      <h3 class="section-title">Легенда цветов</h3>
+      <div class="legend-items">
+        {#each assessmentSegments as segment, i}
+          <div class="legend-item">
+            <div class="legend-color" style={`background-color: ${segment.color};`}></div>
+            <div class="legend-text">
+              <span class="legend-name">{segment.name} этап</span>
+              <span class="legend-duration">{segment.duration} мин - {segment.description}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-container">
+      {#if !isAssessmentRunning}
+        <button class="control-button start-button" on:mousedown={handlePressStart} on:mouseup={handlePressEnd} on:mouseleave={handlePressEnd} on:touchstart|preventDefault={handlePressStart} on:touchend={handlePressEnd} bind:this={startButtonElement}>
+          <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="#34C759" 
+              stroke-width="5" 
+              stroke-dasharray="283" 
+              stroke-dashoffset="{283 - (283 * pressProgress)}" 
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 0.05s linear;"
+            ></circle>
+          </svg>
+          Начать
+        </button>
+      {:else if isAssessmentPaused}
+        <button class="control-button resume-button" on:click={pauseAssessmentWorkout}>
+          Продолжить
+        </button>
+        <button class="control-button finish-button" on:mousedown={handleFinishPressStart} on:mouseup={handleFinishPressEnd} on:mouseleave={handleFinishPressEnd} on:touchstart|preventDefault={handleFinishPressStart} on:touchend={handleFinishPressEnd} bind:this={finishButtonElement}>
+          <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="#db3eb1" 
+              stroke-width="5" 
+              stroke-dasharray="283" 
+              stroke-dashoffset="{283 - (283 * pressProgress)}" 
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 0.05s linear;"
+            ></circle>
+          </svg>
+          Завершить
+        </button>
+      {:else}
+        <button class="control-button pause-button" on:click={pauseAssessmentWorkout}>
+          Пауза
+        </button>
+        <button class="control-button finish-button" on:mousedown={handleFinishPressStart} on:mouseup={handleFinishPressEnd} on:mouseleave={handleFinishPressEnd} on:touchstart|preventDefault={handleFinishPressStart} on:touchend={handleFinishPressEnd} bind:this={finishButtonElement}>
+          <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="#db3eb1" 
+              stroke-width="5" 
+              stroke-dasharray="283" 
+              stroke-dashoffset="{283 - (283 * pressProgress)}" 
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 0.05s linear;"
+            ></circle>
+          </svg>
+          Завершить
+        </button>
+      {/if}
+      
+      <button class="control-button reset-button" on:click={resetAssessmentWorkout}>
+        Сбросить
+      </button>
+    </div>
+  {:else}
+    <!-- Regular Training Interface -->
+    <div class="glass-panel map-panel">
+      <h2 class="section-title">Трекинг в реальном времени</h2>
+      
+      <div class="training-stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Время</div>
+          <div class="stat-value">{trainingStats.time}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Расстояние</div>
+          <div class="stat-value">{trainingStats.distance}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Скорость</div>
+          <div class="stat-value">{trainingStats.speed}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Ср.Скорость</div>
+          <div class="stat-value">{trainingStats.avgSpeed}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Макс.Ск</div>
+          <div class="stat-value">{trainingStats.maxSpeed}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Темп</div>
+          <div class="stat-value">{trainingStats.pace}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Калл</div>
+          <div class="stat-value">{trainingStats.calories}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Шаги</div>
+          <div class="stat-value">{trainingStats.steps}</div>
+        </div>
+      </div>
+      
+      <div class="map-container" bind:this={mapContainer}></div>
+      <div class="control-buttons">
+        {#if !trainingStarted}
+          <button 
+            class="control-button start-button" 
+            on:mousedown={handlePressStart}
+            on:mouseup={handlePressEnd}
+            on:mouseleave={handlePressEnd}
+            on:touchstart|preventDefault={handlePressStart}
+            on:touchend={handlePressEnd}
+            bind:this={startButtonElement}
+          >
+            <svg class="progress-circle" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+              <circle 
+                cx="50" 
+                cy="50" 
+                r="45" 
+                fill="none" 
+                stroke="#34C759" 
+                stroke-width="5" 
+                stroke-dasharray="283" 
+                stroke-dashoffset="{283 - (283 * pressProgress)}" 
+                transform="rotate(-90 50 50)"
+                style="transition: stroke-dashoffset 0.05s linear;"
+              ></circle>
+            </svg>
+            <img src="/icons/play.png" alt="Start" class="button-icon" />
+          </button>
+        {:else}
+          {#if trainingPaused}
+            <button class="control-button resume-button" on:click={pauseTraining}>
+              ▶️
+            </button>
+          {:else}
+            <button class="control-button pause-button" on:click={pauseTraining}>
+              ⏸️
+            </button>
+          {/if}
+          <button 
+            class="control-button finish-button" 
+            on:mousedown={handleFinishPressStart}
+            on:mouseup={handleFinishPressEnd}
+            on:mouseleave={handleFinishPressEnd}
+            on:touchstart|preventDefault={handleFinishPressStart}
+            on:touchend={handleFinishPressEnd}
+            bind:this={finishButtonElement}
+          >
+            <svg class="progress-circle" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+              <circle 
+                cx="50" 
+                cy="50" 
+                r="45" 
+                fill="none" 
+                stroke="#db3eb1" 
+                stroke-width="5" 
+                stroke-dasharray="283" 
+                stroke-dashoffset="{283 - (283 * pressProgress)}" 
+                transform="rotate(-90 50 50)"
+                style="transition: stroke-dashoffset 0.05s linear;"
+              ></circle>
+            </svg>
+            ⏹️
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    <div class="glass-panel training-info">
+      <div class="training-icon">
+        <img src={training.icon} alt={training.name} />
+      </div>
+      <div class="training-details">
+        <h2 class="training-name">{training.name}</h2>
+        <div class="training-stats">
+          {#if training.duration > 0}
+            <span class="training-duration">{training.duration} мин</span>
+          {:else}
+            <span class="training-duration">Без ограничения по времени</span>
+          {/if}
+          {#if training.calories > 0}
+            <span class="training-calories">{training.calories} ккал</span>
+          {/if}
+          <span class="training-intensity" style="color: {getIntensityColor(training.intensity)};">
+            {training.intensity === 'low' ? 'Легкая' : training.intensity === 'medium' ? 'Средняя' : 'Высокая'}
+          </span>
+        </div>
+      </div>
+    </div>
+  {/if}
+</div>
+
+<style>
+  .training-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1.25rem 0;
+    margin-top: 80px;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 0.125rem solid rgba(255, 255, 255, 0.25);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 
+      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
+      inset 0 0 2rem rgba(255, 255, 255, 0.2),
+      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
+      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 15;
+    overflow: hidden;
+  }
+
+  .training-info, .workout-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .training-icon, .workout-icon {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .training-icon img, .workout-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .training-details, .workout-details {
+    flex: 1;
+  }
+
+  .training-name, .workout-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .training-stats, .workout-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .training-duration, .training-calories, .training-intensity, .workout-duration {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .map-panel {
+    height: 70vh;
+    display: flex;
+    flex-direction: column;

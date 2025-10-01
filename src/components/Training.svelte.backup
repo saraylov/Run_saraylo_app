@@ -1,0 +1,1151 @@
+<script>
+  import { onMount, onDestroy } from 'svelte';
+  import Header from './Header.svelte';
+  import mapboxgl from 'mapbox-gl';
+  import { hideTabBar, showTabBar } from '../lib/tabBarStore.js'; // Import TabBar control functions
+  import IntervalVisualization from './IntervalVisualization.svelte';
+
+  // Mapbox access token
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia29tbXVuMTV0IiwiYSI6ImNtZmk1ZzlsNTBoejAybHF3ejR6bjEwZ3oifQ.GHO6tJYDnc03P7fxUshk8A';
+
+  // Initialize training data with default values
+  let training = {
+    id: 1,
+    name: "Утренняя тренировка",
+    type: "running",
+    duration: 30,
+    calories: 320,
+    intensity: "high",
+    icon: "/icons/run.png",
+    startTime: "2023-06-15T08:30:00",
+    endTime: "2023-06-15T09:00:00",
+    completed: false,
+    exercises: [
+      {
+        id: 1,
+        name: "Разминка",
+        duration: 5,
+        calories: 50,
+        completed: true
+      },
+      {
+        id: 2,
+        name: "Бег на дорожке",
+        duration: 20,
+        calories: 250,
+        completed: false
+      },
+      {
+        id: 3,
+        name: "Заминка",
+        duration: 5,
+        calories: 20,
+        completed: false
+      }
+    ]
+  };
+
+  // Workout duration mapping based on workout type
+  const workoutDurations = {
+    'free_run': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio': { duration: 30, calories: 320, intensity: "high" },
+    'timed_run': { duration: 45, calories: 450, intensity: "high" },
+    'assessment_run': { duration: 20, calories: 200, intensity: "medium" },
+    'free_treadmill': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio_treadmill': { duration: 30, calories: 300, intensity: "high" },
+    'timed_treadmill': { duration: 45, calories: 420, intensity: "high" },
+    'assessment_treadmill': { duration: 20, calories: 180, intensity: "medium" },
+    'free_cycling': { duration: 0, calories: 0, intensity: "medium" }, // Free workout - no fixed duration
+    'cardio_cycling': { duration: 30, calories: 280, intensity: "high" },
+    'timed_cycling': { duration: 45, calories: 400, intensity: "high" },
+    'assessment_cycling': { duration: 20, calories: 160, intensity: "medium" },
+    'free_walking': { duration: 0, calories: 0, intensity: "low" }, // Free workout - no fixed duration
+    'cardio_walking': { duration: 30, calories: 180, intensity: "medium" },
+    'timed_walking': { duration: 45, calories: 250, intensity: "medium" },
+    'assessment_walking': { duration: 20, calories: 100, intensity: "low" },
+    'free_nordic': { duration: 0, calories: 0, intensity: "low" }, // Free workout - no fixed duration
+    'cardio_nordic': { duration: 30, calories: 220, intensity: "medium" },
+    'timed_nordic': { duration: 45, calories: 320, intensity: "medium" },
+    'assessment_nordic': { duration: 20, calories: 140, intensity: "low" }
+  };
+
+  // Icon mapping based on category
+  const categoryIcons = {
+    'running': '/icons/run.png',
+    'treadmill': '/icons/treadmill.png',
+    'cycling': '/icons/cycling.png',
+    'walking': '/icons/walking.png',
+    'nordic_walking': '/icons/walking.png'
+  };
+
+  // Try to load selected training data from localStorage
+  onMount(() => {
+    try {
+      const savedTraining = localStorage.getItem('selectedTraining');
+      if (savedTraining) {
+        const trainingData = JSON.parse(savedTraining);
+        // Update training object with selected data
+        if (trainingData.category && trainingData.workout) {
+          training.name = `${trainingData.category.name} - ${trainingData.workout.name}`;
+          training.type = trainingData.category.id;
+          
+          // Set icon based on category
+          training.icon = categoryIcons[trainingData.category.id] || '/icons/run.png';
+          
+          // Set duration, calories, and intensity based on workout type
+          const workoutInfo = workoutDurations[trainingData.workout.id];
+          if (workoutInfo) {
+            training.duration = workoutInfo.duration;
+            // For free workouts (duration = 0), set calories to 0 as well
+            training.calories = workoutInfo.duration === 0 ? 0 : workoutInfo.calories;
+            training.intensity = workoutInfo.intensity;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load selected training from localStorage:', e);
+    }
+    
+    initializeMap();
+  });
+
+  // Training state
+  let trainingStarted = false;
+  let trainingPaused = false;
+  let startTime = null;
+  let elapsedTime = 0;
+  let distance = 0;
+  let speed = 0;
+  
+  // Timer interval
+  let timerInterval = null;
+
+  // Mock real-time training stats
+  let trainingStats = {
+    time: "00:00:00",
+    distance: "0.0 km",
+    speed: "0.0 km/h",
+    avgSpeed: "0.0 km/h",
+    maxSpeed: "0.0 km/h",
+    pace: "0:00 /km",
+    calories: "0 kcal",
+    steps: "0"
+  };
+
+  // Map variables
+  let mapContainer;
+  let map;
+  let geolocateControl;
+  let routeCoordinates = [];
+  let routeSourceId = 'route-source';
+  let routeLayerId = 'route-layer';
+
+  // Function to format time
+  function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Function to get intensity color
+  function getIntensityColor(intensity) {
+    switch (intensity) {
+      case 'low': return '#41B6E6'; // Miami Blue
+      case 'medium': return '#FFD700'; // Gold
+      case 'high': return '#db3eb1'; // Miami Pink
+      default: return '#FFFFFF';
+    }
+  }
+
+  // Function to toggle exercise completion
+  function toggleExerciseCompletion(exerciseId) {
+    const exercise = training.exercises.find(e => e.id === exerciseId);
+    if (exercise) {
+      exercise.completed = !exercise.completed;
+    }
+  }
+
+  // Function to format elapsed time as HH:MM:SS
+  function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // Function to update training stats
+  function updateTrainingStats() {
+    if (!trainingStarted || trainingPaused) return;
+    
+    // Update elapsed time
+    const currentTime = new Date().getTime();
+    elapsedTime = currentTime - startTime;
+    trainingStats.time = formatElapsedTime(elapsedTime);
+    
+    // Simulate more realistic distance and speed updates
+    // In a real app, this would come from GPS or other sensors
+    // Simulate varying speed for more realistic training simulation
+    const seconds = elapsedTime / 1000;
+    const minutes = seconds / 60;
+    
+    // Simulate varying speed (in km/h) based on a sine wave for more realistic movement
+    // Base speed of 10 km/h with variations
+    const baseSpeed = 10;
+    const speedVariation = 5 * Math.sin(seconds * 0.1); // Varying component
+    speed = baseSpeed + speedVariation;
+    
+    // Ensure speed doesn't go below 0
+    if (speed < 0) speed = 0;
+    
+    // Calculate distance based on current speed (integrate over time)
+    // Distance = speed (km/h) * time (h)
+    distance = (speed * minutes) / 60; // Convert minutes to hours
+    
+    trainingStats.distance = `${distance.toFixed(2)} km`;
+    trainingStats.speed = `${speed.toFixed(1)} km/h`;
+    
+    // Update average speed (total distance / total time)
+    const hours = elapsedTime / (1000 * 60 * 60);
+    if (hours > 0) {
+      trainingStats.avgSpeed = `${(distance / hours).toFixed(1)} km/h`;
+    } else {
+      trainingStats.avgSpeed = "0.0 km/h";
+    }
+    
+    // Update max speed
+    const currentMaxSpeed = parseFloat(trainingStats.maxSpeed);
+    if (speed > currentMaxSpeed) {
+      trainingStats.maxSpeed = `${speed.toFixed(1)} km/h`;
+    }
+    
+    // Update pace (time per km) - minutes:seconds per kilometer
+    if (speed > 0) {
+      // Pace = 60 minutes / speed (km/h)
+      const paceMinutes = 60 / speed;
+      const minutes = Math.floor(paceMinutes);
+      const seconds = Math.floor((paceMinutes - minutes) * 60);
+      trainingStats.pace = `${minutes}:${seconds.toString().padStart(2, '0')} /km`;
+    } else {
+      trainingStats.pace = "0:00 /km";
+    }
+    
+    // Update calories (more realistic calculation based on MET values)
+    // MET (Metabolic Equivalent of Task) values for running at different speeds
+    let metValue = 0;
+    if (speed < 8) {
+      metValue = 8.0; // Slow running/jogging
+    } else if (speed < 10) {
+      metValue = 10.0; // Moderate running
+    } else if (speed < 12) {
+      metValue = 12.0; // Fast running
+    } else {
+      metValue = 14.0; // Very fast running
+    }
+    
+    // Calories burned = MET * weight(kg) * time(hours)
+    // Assuming an average weight of 70kg for demonstration
+    const weight = 70; // kg
+    const calories = Math.floor(metValue * weight * hours);
+    trainingStats.calories = `${calories} kcal`;
+    
+    // Update steps (more realistic calculation)
+    // Steps per km varies by person, but average is about 1400-2000 steps per km
+    // We'll calculate based on stride length which depends on speed
+    let stepsPerKm = 0;
+    if (speed < 6) {
+      stepsPerKm = 1800; // Walking/slow jogging
+    } else if (speed < 10) {
+      stepsPerKm = 1600; // Moderate running
+    } else if (speed < 14) {
+      stepsPerKm = 1500; // Fast running
+    } else {
+      stepsPerKm = 1400; // Very fast running (longer strides)
+    }
+    
+    const steps = Math.floor(distance * stepsPerKm);
+    trainingStats.steps = `${steps.toLocaleString()}`;
+  }
+
+  // Long press variables
+  let pressTimer = null;
+  let pressProgress = 0;
+  let isPressing = false;
+  let startButtonElement;
+  let finishButtonElement;
+
+  // Function to handle long press start
+  function handlePressStart() {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    // Clear any existing timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    // Start progress tracking
+    const startTime = Date.now();
+    const duration = 2500; // 2.5 seconds
+    
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(1, elapsed / duration);
+      
+      // Update button scale based on progress (0% to 50% increase)
+      if (startButtonElement) {
+        const scale = 1 + (0.5 * pressProgress);
+        startButtonElement.style.transform = `scale(${scale})`;
+      }
+      
+      // Check if 2.5 seconds have passed
+      if (elapsed >= duration) {
+        clearInterval(pressTimer);
+        pressTimer = null;
+        isPressing = false;
+        pressProgress = 1;
+        
+        // Trigger start training
+        startTraining();
+      }
+    }, 10); // Update every 10ms for smooth animation
+  }
+
+  // Function to handle press end/cancel
+  function handlePressEnd() {
+    if (!isPressing) return;
+    
+    isPressing = false;
+    
+    // Clear timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+      pressTimer = null;
+    }
+    
+    // Reset button scale
+    if (startButtonElement) {
+      startButtonElement.style.transform = 'scale(1)';
+    }
+    
+    pressProgress = 0;
+  }
+
+  // Function to handle long press start for finish button
+  function handleFinishPressStart() {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    // Clear any existing timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    // Start progress tracking
+    const startTime = Date.now();
+    const duration = 2500; // 2.5 seconds
+    
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(1, elapsed / duration);
+      
+      // Update button scale based on progress (0% to 50% increase)
+      if (finishButtonElement) {
+        const scale = 1 + (0.5 * pressProgress);
+        finishButtonElement.style.transform = `scale(${scale})`;
+      }
+      
+      // Check if 2.5 seconds have passed
+      if (elapsed >= duration) {
+        clearInterval(pressTimer);
+        pressTimer = null;
+        isPressing = false;
+        pressProgress = 1;
+        
+        // Trigger finish training
+        finishTraining();
+      }
+    }, 10); // Update every 10ms for smooth animation
+  }
+
+  // Function to handle press end/cancel for finish button
+  function handleFinishPressEnd() {
+    if (!isPressing) return;
+    
+    isPressing = false;
+    
+    // Clear timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+      pressTimer = null;
+    }
+    
+    // Reset button scale
+    if (finishButtonElement) {
+      finishButtonElement.style.transform = 'scale(1)';
+    }
+    
+    pressProgress = 0;
+  }
+
+  // Function to start training
+  function startTraining() {
+    trainingStarted = true;
+    trainingPaused = false;
+    startTime = new Date().getTime() - elapsedTime; // Resume from where we left off if paused
+    
+    // Hide TabBar when training starts
+    hideTabBar();
+    
+    // Start timer interval
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTrainingStats, 1000);
+    
+    // Start geolocation tracking
+    if (geolocateControl) {
+      geolocateControl.trigger();
+    }
+    
+    console.log('Тренировка начата');
+  }
+
+  // Function to pause training
+  function pauseTraining() {
+    trainingPaused = !trainingPaused;
+    
+    if (trainingPaused) {
+      // Pause the timer
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      console.log('Тренировка приостановлена');
+    } else {
+      // Resume the timer
+      startTime = new Date().getTime() - elapsedTime;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTrainingStats, 1000);
+      console.log('Тренировка возобновлена');
+    }
+  }
+
+  // Function to finish training
+  function finishTraining() {
+    trainingStarted = false;
+    trainingPaused = false;
+    
+    // Show TabBar when training finishes
+    showTabBar();
+    
+    // Clear the timer
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    
+    // Reset stats
+    elapsedTime = 0;
+    distance = 0;
+    speed = 0;
+    
+    // Reset displayed stats
+    trainingStats.time = "00:00:00";
+    trainingStats.distance = "0.0 km";
+    trainingStats.speed = "0.0 km/h";
+    trainingStats.avgSpeed = "0.0 km/h";
+    trainingStats.maxSpeed = "0.0 km/h";
+    trainingStats.pace = "0:00 /km";
+    trainingStats.calories = "0 kcal";
+    trainingStats.steps = "0";
+    
+    // Reset route
+    routeCoordinates = [];
+    if (map && map.getSource(routeSourceId)) {
+      map.getSource(routeSourceId).setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: []
+        }
+      });
+    }
+    
+    console.log('Тренировка завершена');
+  }
+
+  // Export functions for parent component
+  export let onBack;
+  export let onSettings;
+
+  // Initialize the Mapbox map
+  function initializeMap() {
+    if (!mapContainer) return;
+    
+    map = new mapboxgl.Map({
+      container: mapContainer,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [30.5234, 50.4501], // Default to Kyiv coordinates
+      zoom: 14
+    });
+
+    // Add navigation controls
+    const nav = new mapboxgl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+    });
+    map.addControl(nav, 'top-right');
+
+    // Add geolocate control
+    geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+    map.addControl(geolocateControl, 'top-left');
+
+    // Wait for map to load before adding event listeners
+    map.on('load', () => {
+      // Set up event listeners for geolocation
+      geolocateControl.on('geolocate', (position) => {
+        if (!trainingStarted) return;
+        
+        const { longitude, latitude } = position.coords;
+        const newCoordinate = [longitude, latitude];
+        
+        // Add new coordinate to route
+        routeCoordinates.push(newCoordinate);
+        
+        // Update or create route source
+        if (map.getSource(routeSourceId)) {
+          map.getSource(routeSourceId).setData({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: routeCoordinates
+            }
+          });
+        } else {
+          // Create route source and layer
+          map.addSource(routeSourceId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates
+              }
+            }
+          });
+          
+          map.addLayer({
+            id: routeLayerId,
+            type: 'line',
+            source: routeSourceId,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#db3eb1', // Miami Pink
+              'line-width': 5,
+              'line-opacity': 0.75
+            }
+          });
+        }
+        
+        // Smoothly move the map to follow the user
+        map.easeTo({
+          center: newCoordinate,
+          zoom: 16,
+          duration: 1000 // Smooth transition over 1 second
+        });
+      });
+
+      // Handle errors in geolocation
+      geolocateControl.on('error', (error) => {
+        console.error('Geolocation error:', error);
+        alert('Не удалось получить ваше местоположение. Пожалуйста, проверьте настройки браузера.');
+      });
+    });
+  }
+</script>
+
+<Header title="Тренировка" showSettingsButton={false} onSettings={onSettings} onBack={onBack} />
+
+<div class="training-container">
+  <!-- Map Panel with Controls at Bottom -->
+  <div class="glass-panel map-panel">
+    <h2 class="section-title">Трекинг в реальном времени</h2>
+    
+    <!-- Training Stats Grid -->
+    <div class="training-stats-grid">
+      <div class="stat-item">
+        <div class="stat-label">Время</div>
+        <div class="stat-value">{trainingStats.time}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Расстояние</div>
+        <div class="stat-value">{trainingStats.distance}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Скорость</div>
+        <div class="stat-value">{trainingStats.speed}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Ср.Скорость</div>
+        <div class="stat-value">{trainingStats.avgSpeed}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Макс.Ск</div>
+        <div class="stat-value">{trainingStats.maxSpeed}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Темп</div>
+        <div class="stat-value">{trainingStats.pace}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Калл</div>
+        <div class="stat-value">{trainingStats.calories}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Шаги</div>
+        <div class="stat-value">{trainingStats.steps}</div>
+      </div>
+    </div>
+    
+    <div class="map-container" bind:this={mapContainer}></div>
+    <div class="control-buttons">
+      {#if !trainingStarted}
+        <button 
+          class="control-button start-button" 
+          on:mousedown={handlePressStart}
+          on:mouseup={handlePressEnd}
+          on:mouseleave={handlePressEnd}
+          on:touchstart|preventDefault={handlePressStart}
+          on:touchend={handlePressEnd}
+          bind:this={startButtonElement}
+        >
+          <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="#34C759" 
+              stroke-width="5" 
+              stroke-dasharray="283" 
+              stroke-dashoffset="{283 - (283 * pressProgress)}" 
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 0.05s linear;"
+            ></circle>
+          </svg>
+          <img src="/icons/play.png" alt="Start" class="button-icon" />
+        </button>
+      {:else}
+        {#if trainingPaused}
+          <button class="control-button resume-button" on:click={pauseTraining}>
+            ▶️
+          </button>
+        {:else}
+          <button class="control-button pause-button" on:click={pauseTraining}>
+            ⏸️
+          </button>
+        {/if}
+        <button 
+          class="control-button finish-button" 
+          on:mousedown={handleFinishPressStart}
+          on:mouseup={handleFinishPressEnd}
+          on:mouseleave={handleFinishPressEnd}
+          on:touchstart|preventDefault={handleFinishPressStart}
+          on:touchend={handleFinishPressEnd}
+          bind:this={finishButtonElement}
+        >
+          <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
+            <circle 
+              cx="50" 
+              cy="50" 
+              r="45" 
+              fill="none" 
+              stroke="#db3eb1" 
+              stroke-width="5" 
+              stroke-dasharray="283" 
+              stroke-dashoffset="{283 - (283 * pressProgress)}" 
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 0.05s linear;"
+            ></circle>
+          </svg>
+          ⏹️
+        </button>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Training Info -->
+  <div class="glass-panel training-info">
+    <div class="training-icon">
+      <img src={training.icon} alt={training.name} />
+    </div>
+    <div class="training-details">
+      <h2 class="training-name">{training.name}</h2>
+      <div class="training-stats">
+        {#if training.duration > 0}
+          <span class="training-duration">{training.duration} мин</span>
+        {:else}
+          <span class="training-duration">Без ограничения по времени</span>
+        {/if}
+        {#if training.calories > 0}
+          <span class="training-calories">{training.calories} ккал</span>
+        {/if}
+        <span class="training-intensity" style="color: {getIntensityColor(training.intensity)};">
+          {training.intensity === 'low' ? 'Легкая' : training.intensity === 'medium' ? 'Средняя' : 'Высокая'}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interval Visualization -->
+  <IntervalVisualization />
+
+</div>
+
+<style>
+  .training-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1.25rem 0;
+    margin-top: 80px; /* Space for fixed header */
+  }
+
+  /* Glass panel effect - consistent with app styling */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.12); /* Increased opacity for thicker appearance */
+    backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+    -webkit-backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+    border: 0.125rem solid rgba(255, 255, 255, 0.25); /* Thicker border */
+    border-radius: 1.5rem; /* Slightly increased radius */
+    padding: 1.5rem; /* Increased padding */
+    box-shadow: 
+      0 0.75rem 3rem rgba(0, 0, 0, 0.3), /* Enhanced shadow */
+      inset 0 0 2rem rgba(255, 255, 255, 0.2), /* Inner glow for thickness */
+      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15), /* Bottom inner light */
+      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2); /* Top inner light */
+    position: relative;
+    z-index: 15;
+    overflow: hidden;
+  }
+
+  /* Training Info Panel */
+  .training-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .training-icon {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .training-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .training-details {
+    flex: 1;
+  }
+
+  .training-name {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .training-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .training-duration, .training-calories, .training-intensity {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Map Panel */
+  .map-panel {
+    height: 70vh; /* Reduced height as per user preference */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Training Stats Grid */
+  .training-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-item {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    text-align: center;
+    backdrop-filter: blur(5px);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.15);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .map-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    margin-bottom: 1rem; /* Space for buttons */
+  }
+
+  /* Control Buttons at Bottom of Map */
+  .control-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: auto; /* Push buttons to bottom */
+  }
+
+  .control-button {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(0.3125rem);
+    -webkit-backdrop-filter: blur(0.3125rem);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%; /* Make buttons circular */
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0; /* Remove padding for circular shape */
+    font-size: 1.5rem; /* Increase font size for better symbol visibility */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
+      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
+    width: 60px; /* Fixed width for circular shape */
+    height: 60px; /* Fixed height for circular shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transform-origin: center;
+  }
+
+  /* Progress circle around start button */
+  .progress-circle {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    width: 70px;
+    height: 70px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    transform: rotate(-90deg);
+  }
+
+  .control-button:active .progress-circle,
+  .control-button:hover .progress-circle {
+    opacity: 1;
+  }
+
+  /* Style for button icons */
+  .button-icon {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    transition: transform 0.1s ease;
+    z-index: 1;
+  }
+
+  .control-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
+      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
+  }
+
+  .control-button:active {
+    transform: translateY(0);
+  }
+
+  .start-button {
+    background: linear-gradient(90deg, #41B6E6, #34C759);
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .start-button:hover {
+    background: linear-gradient(90deg, #41B6E6, #34C759); /* Maintain original gradient */
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .resume-button {
+    background: linear-gradient(90deg, #41B6E6, #34C759);
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .resume-button:hover {
+    background: linear-gradient(90deg, #41B6E6, #34C759); /* Maintain original gradient */
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .pause-button {
+    background: linear-gradient(90deg, #41B6E6, #FF9500);
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .pause-button:hover {
+    background: linear-gradient(90deg, #41B6E6, #FF9500); /* Maintain original gradient */
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .finish-button {
+    background: linear-gradient(90deg, #41B6E6, #db3eb1);
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .finish-button:hover {
+    background: linear-gradient(90deg, #41B6E6, #db3eb1); /* Maintain original gradient */
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  .section-title {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.3rem;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  
+  .exercise-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    backdrop-filter: blur(0.3125rem);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .exercise-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .exercise-card.completed {
+    opacity: 0.7;
+  }
+
+  .exercise-info {
+    flex: 1;
+  }
+
+  .exercise-name {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .exercise-details {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .exercise-duration, .exercise-calories {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .exercise-actions {
+    display: flex;
+    align-items: center;
+  }
+
+  .complete-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .complete-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  .complete-button.completed {
+    background: linear-gradient(90deg, #41B6E6, #db3eb1);
+    color: white;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Responsive design */
+  @media (max-width: 48rem) { /* 768px */
+    .training-container {
+      padding: 1rem 0;
+      gap: 1rem;
+    }
+
+    .glass-panel {
+      padding: 1.25rem;
+    }
+
+    .training-info {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .training-stats {
+      justify-content: center;
+    }
+
+    .control-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .exercise-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .exercise-details {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .exercise-actions {
+      align-self: flex-end;
+      margin-top: 1rem;
+    }
+    
+    /* Adjust circular buttons for smaller screens */
+    .control-button {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+    }
+    
+    /* Adjust stats grid for smaller screens */
+    .training-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 30rem) { /* 480px */
+    .training-container {
+      padding: 0.75rem 0;
+      gap: 0.75rem;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+    }
+
+    .training-name {
+      font-size: 1.2rem;
+    }
+
+    .training-duration, .training-calories, .training-intensity {
+      font-size: 0.9rem;
+    }
+
+    .exercise-name {
+      font-size: 1rem;
+    }
+
+    .exercise-duration, .exercise-calories {
+      font-size: 0.8rem;
+    }
+
+    /* Adjust circular buttons for very small screens */
+    .control-button {
+      width: 45px;
+      height: 45px;
+      font-size: 1rem;
+    }
+    
+    /* Adjust stats grid for very small screens */
+    .stat-item {
+      padding: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.65rem;
+    }
+    
+    .stat-value {
+      font-size: 0.9rem;
+    }
+  }
+</script>
+</file>
+</style>
+</script>
+</file>

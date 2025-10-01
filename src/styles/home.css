@@ -1,0 +1,105 @@
+/* Home Component Styles */
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+/* Add margin-top to account for fixed header */
+.glass-panel {
+  margin-top: 80px; /* Header height (60px) + top offset (1rem ≈ 16px) + some spacing */
+  
+  /* Enhanced Glass panel effect - thicker glass appearance */
+  background: rgba(255, 255, 255, 0.12); /* Increased opacity for thicker appearance */
+  backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+  -webkit-backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
+  border: 0.125rem solid rgba(255, 255, 255, 0.25); /* Thicker border */
+  border-radius: 1.5rem; /* Slightly increased radius */
+  padding: 1.5rem; /* Increased padding */
+  box-shadow: 
+    0 0.75rem 3rem rgba(0, 0, 0, 0.3), /* Enhanced shadow */
+    inset 0 0 2rem rgba(255, 255, 255, 0.2), /* Inner glow for thickness */
+    inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15), /* Bottom inner light */
+    inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2); /* Top inner light */
+  position: relative;
+  z-index: 15;
+  overflow: hidden;
+}
+
+.activity-panel {
+  margin-top: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.3rem;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.health-button, .exercises-button, .test-button {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  color: white;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  min-width: 200px;
+  margin-top: 1rem;
+}
+
+.health-button:hover, .exercises-button:hover, .test-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.health-button:active, .exercises-button:active, .test-button:active {
+  transform: translateY(0);
+}
+
+/* Page header with title */
+.page-header {
+  text-align: center;
+  padding: 1rem 0;
+  margin: 1rem 0;
+  border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.2);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 600;
+}
+
+.welcome-message {
+  text-align: center;
+  margin: 1.5rem 0;
+  font-size: 1.125rem;
+}
+
+.app-features {
+  margin: 1.5rem 0;
+}
+
+.app-features ul {
+  text-align: left;
+  margin-top: 1rem;
+  padding-left: 1.25rem;
+}
+
+.app-features li {
+  margin-bottom: 0.625rem;
+}
