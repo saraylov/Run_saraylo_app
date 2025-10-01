@@ -11,6 +11,7 @@
   import TabBar from './components/TabBar.svelte';
   import ActivityRingsTest from './components/ActivityRingsTest.svelte';
   import History from './components/History.svelte'; // Import History component
+  import HotReloadDemo from './components/HotReloadDemo.svelte'; // Import Hot Reload Demo component
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js'; // Import TabBar control functions
 
   // State for authentication
@@ -211,9 +212,25 @@
     console.log('currentView is now:', currentView);
   }
   
+  // Handle navigation to hot reload demo
+  function handleGoToHotReloadDemo() {
+    console.log('handleGoToHotReloadDemo called, setting currentView to hot-reload-demo');
+    currentView = 'hot-reload-demo';
+    hideTabBar(); // Hide TabBar on demo page
+    console.log('currentView is now:', currentView);
+  }
+  
   // Handle navigation back from test
   function handleTestBack() {
     console.log('handleTestBack called, setting currentView to home');
+    currentView = 'home';
+    showTabBar(); // Show TabBar when returning to home
+    console.log('currentView is now:', currentView);
+  }
+  
+  // Handle navigation back from hot reload demo
+  function handleHotReloadDemoBack() {
+    console.log('handleHotReloadDemoBack called, setting currentView to home');
     currentView = 'home';
     showTabBar(); // Show TabBar when returning to home
     console.log('currentView is now:', currentView);
@@ -287,6 +304,10 @@
         // Repurpose settings tab to navigate to profile
         currentView = 'profile';
         break;
+      case 'hot-reload-demo':
+        // Navigate to Hot Reload Demo page
+        currentView = 'hot-reload-demo';
+        break;
       default:
         currentView = 'home';
     }
@@ -337,6 +358,8 @@
       <History onBack={handleHistoryBack} onSettings={handleGoToSettings} />
     {:else if currentView === 'test'}
       <ActivityRingsTest />
+    {:else if currentView === 'hot-reload-demo'}
+      <HotReloadDemo />
     {/if}
 
   {/if}

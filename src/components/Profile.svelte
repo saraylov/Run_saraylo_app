@@ -123,7 +123,6 @@
           {#each assessmentResults[0].segments as segment, i}
             <div class="color-panel" style="background-color: {segment.color};" title="{segment.name}: {segment.avgSpeed} км/ч">
               <div class="panel-content">
-                <div class="segment-name">{segment.name}</div>
                 <div class="segment-speed">{segment.avgSpeed} км/ч</div>
               </div>
             </div>
@@ -301,12 +300,6 @@
     align-items: center;
     text-align: center;
     font-size: 0.7rem;
-  }
-  
-  .segment-name {
-    font-size: 0.65rem;
-    margin-bottom: 0.2rem;
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
   
   .segment-speed {

@@ -38,6 +38,11 @@
 	function onSettingsClick() {
 		dispatch('tabChanged', { tab: 'profile' });
 	}
+	
+	// Function to navigate to hot reload demo
+	function onHotReloadDemoClick() {
+		dispatch('tabChanged', { tab: 'hot-reload-demo' });
+	}
 </script>
 
 {#if $tabBarVisible}
@@ -78,6 +83,14 @@
 					<img src="./icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
 				</div>
 				<span class="tab-label">Устройства</span>
+			</div>
+			<!-- Hot Reload Demo tab -->
+			<div class="tab-item" on:click={onHotReloadDemoClick}>
+				<div class="tab-icon">
+					<!-- Hot Reload icon -->
+					<img src="./icons/central.png" alt="Hot Reload Demo" class="image-icon" />
+				</div>
+				<span class="tab-label">Hot Reload</span>
 			</div>
 			<!-- Updated tab to navigate to profile instead of settings -->
 			<div class="tab-item" on:click={onSettingsClick}>
