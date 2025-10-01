@@ -14,7 +14,7 @@
   import History from './components/History.svelte';
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js';
   import TapBarReady from './components/TapBarReady.svelte'; // Импорт нового компонента TapBarReady
-  import { workoutSelected } from './lib/workoutSelectionStore.js'; // Импорт хранилища выбора тренировки
+  import { workoutSelected, resetWorkoutSelection } from './lib/workoutSelectionStore.js'; // Импорт хранилища выбора тренировки
 
   // State for authentication
   let isAuthenticated = $state(true); // Always authenticated
@@ -192,6 +192,8 @@
     console.log('handleExercisesBack called, setting currentView to home');
     currentView = 'home';
     showTabBar(); // Keep TabBar visible on home page
+    // Reset workout selection when leaving exercises page
+    resetWorkoutSelection();
     console.log('currentView is now:', currentView);
   }
 
@@ -232,6 +234,8 @@
     console.log('handleHistoryBack called, setting currentView to home');
     currentView = 'home';
     showTabBar(); // Keep TabBar visible on home page
+    // Reset workout selection when leaving history page
+    resetWorkoutSelection();
     console.log('currentView is now:', currentView);
   }
   
@@ -246,6 +250,8 @@
     setTimeout(() => {
       currentView = 'home';
       showTabBar(); // Show TabBar when returning to home
+      // Reset workout selection when logging out
+      resetWorkoutSelection();
     }, 100);
   }
   

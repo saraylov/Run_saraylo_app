@@ -185,9 +185,23 @@
 
   // Function to select a workout
   function selectWorkout(workout) {
-    selectedWorkout = workout;
-    // Update workout selection state
-    setWorkoutSelected(true);
+    try {
+      selectedWorkout = workout;
+      // Update workout selection state with full workout data
+      const category = categories.find(c => c.id === selectedCategory);
+      if (category && workout) {
+        setWorkoutSelected({
+          category: category,
+          workout: workout
+        });
+      } else {
+        console.warn('Invalid category or workout selection');
+        setWorkoutSelected(null);
+      }
+    } catch (error) {
+      console.error('Error selecting workout:', error);
+      setWorkoutSelected(null);
+    }
   }
 
   // Function to get segments for a workout
@@ -218,13 +232,6 @@
       workout: selectedWorkout,
       startTime: new Date().toISOString()
     };
-    
-    // Store the selected training data in localStorage
-    try {
-      localStorage.setItem('selectedTraining', JSON.stringify(trainingData));
-    } catch (e) {
-      console.error('Failed to save selected training to localStorage:', e);
-    }
     
     // Call the onTraining function passed from the parent with view transition
     if (onTraining) {

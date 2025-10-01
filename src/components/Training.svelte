@@ -8,6 +8,7 @@
   import intensityZoneService from '../lib/intensityZoneService.js'; // Import Intensity Zone Service
   import TrainingTabBar from './TrainingTabBar.svelte'; // Import the new Training TabBar
   import ActiveTrainingTabBar from './ActiveTrainingTabBar.svelte'; // Import the Active Training TabBar
+  import { workoutSelected, resetWorkoutSelection } from '../lib/workoutSelectionStore.js'; // Import workout selection store and reset function
 
   // Create event dispatcher for communicating with parent components
   const dispatch = createEventDispatcher();
@@ -16,7 +17,7 @@
   mapboxgl.accessToken = 'pk.eyJ1Ijoia29tbXVuMTV0IiwiYSI6ImNtZmk1ZzlsNTBoejAybHF3ejR6bjEwZ3oifQ.GHO6tJYDnc03P7fxUshk8A';
 
   // Initialize training data with default values
-  let training = {
+  let training = $state({
     id: 1,
     name: "Утренняя тренировка",
     type: "running",
@@ -50,7 +51,7 @@
         completed: false
       }
     ]
-  };
+  });
 
   // Define segment patterns for different workout types
   const workoutSegments = {
@@ -214,6 +215,7 @@
   // Try to load selected training data from localStorage
   onMount(() => {
     try {
+      // First try to get data from the store (passed directly)
       const savedTraining = localStorage.getItem('selectedTraining');
       if (savedTraining) {
         const trainingData = JSON.parse(savedTraining);
@@ -807,10 +809,10 @@
   function saveWorkoutToHistory() {
     try {
       // Get selected training data
-      const savedTraining = localStorage.getItem('selectedTraining');
+      const selectedWorkout = $workoutSelected;
       let trainingData = null;
-      if (savedTraining) {
-        trainingData = JSON.parse(savedTraining);
+      if (selectedWorkout) {
+        trainingData = selectedWorkout;
       }
       
       // Get workout segments for visualization
@@ -832,11 +834,25 @@
         segments: finalWorkoutData.segments // Segments with average speeds
       };
       
+      // Validate required fields
+      if (!workoutEntry.date || !workoutEntry.type) {
+        throw new Error('Missing required workout data');
+      }
+      
       // Load existing history
       let history = [];
       const existingHistory = localStorage.getItem('workoutHistory');
       if (existingHistory) {
-        history = JSON.parse(existingHistory);
+        try {
+          history = JSON.parse(existingHistory);
+          // Ensure it's an array
+          if (!Array.isArray(history)) {
+            history = [];
+          }
+        } catch (parseError) {
+          console.error('Error parsing existing workout history:', parseError);
+          history = [];
+        }
       }
       
       // Add new workout to history
@@ -848,6 +864,8 @@
       console.log('Тренировка сохранена в истории:', workoutEntry);
     } catch (error) {
       console.error('Ошибка при сохранении тренировки в истории:', error);
+      // Show user-friendly error message
+      alert('Не удалось сохранить тренировку в историю. Пожалуйста, попробуйте еще раз.');
       // In a real implementation, you might want to show an error message to the user
     }
   }
@@ -955,23 +973,114 @@
 
   // Get the workout ID for timeline display
   function getWorkoutId() {
-    // Try to load selected training data from localStorage
-    try {
-      const savedTraining = localStorage.getItem('selectedTraining');
-      if (savedTraining) {
-        const trainingData = JSON.parse(savedTraining);
-        if (trainingData.workout && trainingData.workout.id) {
-          return trainingData.workout.id;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load selected training from localStorage:', e);
+    // Try to get data from the store (passed directly)
+    const selectedWorkout = $workoutSelected;
+    if (selectedWorkout && selectedWorkout.workout && selectedWorkout.workout.id) {
+      return selectedWorkout.workout.id;
     }
     
     // Default to assessment_run if no workout ID found
     return 'assessment_run';
   }
   
+  // Update training data when workout selection changes
+  $effect(() => {
+    try {
+      const selectedWorkout = $workoutSelected;
+      if (selectedWorkout && selectedWorkout.category && selectedWorkout.workout) {
+        training.name = `${selectedWorkout.category.name} - ${selectedWorkout.workout.name}`;
+        training.type = selectedWorkout.category.id;
+        
+        // Set icon based on category
+        training.icon = categoryIcons[selectedWorkout.category.id] || '/icons/run.png';
+        
+        // Set duration, calories, and intensity based on workout type
+        const workoutInfo = workoutDurations[selectedWorkout.workout.id];
+        if (workoutInfo) {
+          training.duration = workoutInfo.duration;
+          // For free workouts (duration = 0), set calories to 0 as well
+          training.calories = workoutInfo.duration === 0 ? 0 : workoutInfo.calories;
+          training.intensity = workoutInfo.intensity;
+        }
+      } else if (selectedWorkout === null) {
+        // Reset to default values if no workout is selected
+        training = {
+          id: 1,
+          name: "Утренняя тренировка",
+          type: "running",
+          duration: 30,
+          calories: 320,
+          intensity: "high",
+          icon: "./icons/run.png",
+          startTime: "2023-06-15T08:30:00",
+          endTime: "2023-06-15T09:00:00",
+          completed: false,
+          exercises: [
+            {
+              id: 1,
+              name: "Разминка",
+              duration: 5,
+              calories: 50,
+              completed: true
+            },
+            {
+              id: 2,
+              name: "Бег на дорожке",
+              duration: 20,
+              calories: 250,
+              completed: false
+            },
+            {
+              id: 3,
+              name: "Заминка",
+              duration: 5,
+              calories: 20,
+              completed: false
+            }
+          ]
+        };
+      }
+    } catch (error) {
+      console.error('Error updating training data:', error);
+      // Reset to default values on error
+      training = {
+        id: 1,
+        name: "Утренняя тренировка",
+        type: "running",
+        duration: 30,
+        calories: 320,
+        intensity: "high",
+        icon: "./icons/run.png",
+        startTime: "2023-06-15T08:30:00",
+        endTime: "2023-06-15T09:00:00",
+        completed: false,
+        exercises: [
+          {
+            id: 1,
+            name: "Разминка",
+            duration: 5,
+            calories: 50,
+            completed: true
+          },
+          {
+            id: 2,
+            name: "Бег на дорожке",
+            duration: 20,
+            calories: 250,
+            completed: false
+          },
+          {
+            id: 3,
+            name: "Заминка",
+            duration: 5,
+            calories: 20,
+            completed: false
+          }
+        ]
+      };
+    }
+  });
+
   // Function to handle tab changes from TrainingTabBar
   function handleTabChange(event) {
     const { tab } = event.detail;
@@ -997,7 +1106,10 @@
     finishTraining();
   }
   
-  
+  // Reset workout selection when component is destroyed
+  onDestroy(() => {
+    resetWorkoutSelection();
+  });
 </script>
 
 <Header title="Тренировка" showSettingsButton={false} onSettings={onSettings} onBack={onBack} />
