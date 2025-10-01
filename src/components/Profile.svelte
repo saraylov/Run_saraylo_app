@@ -33,10 +33,6 @@
     { date: "2023-06-11", steps: 15230, duration: "68 мин" }
   ];
   
-  // Intensity zones data
-  let intensityZones = null;
-  let previousZones = null;
-  
   // Assessment results data
   let assessmentResults = [
     {
@@ -86,35 +82,6 @@
   
   // Function to handle history navigation
   export let onHistory;
-  
-  // Load intensity zones data on component mount
-  onMount(() => {
-    loadIntensityZones();
-  });
-  
-  // Function to load intensity zones data
-  function loadIntensityZones() {
-    try {
-      const zonesData = intensityZoneService.getZonesData();
-      if (zonesData) {
-        // For demonstration, we'll create a mock previous zones object
-        // In a real implementation, you would load actual previous data
-        previousZones = {
-          zones: {
-            blue: { averageSpeed: 7.8 },
-            green: { averageSpeed: 9.5 },
-            yellow: { averageSpeed: 11.2 },
-            orange: { averageSpeed: 13.8 },
-            red: { averageSpeed: 15.1 }
-          }
-        };
-        
-        intensityZones = zonesData;
-      }
-    } catch (error) {
-      console.error('Failed to load intensity zones:', error);
-    }
-  }
 </script>
 
 <Header title="Профиль" showSettingsButton={true} showHistoryButton={true} onSettings={onSettings} onHistory={onHistory} />
@@ -147,70 +114,28 @@
       </div>
     </div>
     
-    <!-- Intensity Zones Section -->
-    <div class="intensity-zones-section">
-      <h3 class="panel-title">Мои зоны интенсивности</h3>
-      {#if intensityZones}
-        <div class="zones-container">
-          {#each Object.entries(intensityZones.zones) as [key, zone]}
-            <div class="zone-card" style="background-color: {zone.color};" title="{zone.name}: {zone.averageSpeed.toFixed(1)} км/ч">
-              <div class="zone-header">
-                <span class="zone-name">{zone.name}</span>
-                <span class="zone-percentage">{zone.percentage}</span>
-              </div>
-              <div class="zone-details">
-                <div class="zone-speed-range">
-                  {zone.speedRange.min.toFixed(1)} - {zone.speedRange.max.toFixed(1)} км/ч
-                </div>
-                <div class="zone-average-speed">
-                  Средняя скорость: {zone.averageSpeed.toFixed(1)} км/ч
-                </div>
-                {#if previousZones && previousZones.zones[key]}
-                  <div class="zone-comparison">
-                    {#if zone.averageSpeed > previousZones.zones[key].averageSpeed}
-                      <span class="improvement">↑ +{(zone.averageSpeed - previousZones.zones[key].averageSpeed).toFixed(1)} км/ч</span>
-                    {:else if zone.averageSpeed < previousZones.zones[key].averageSpeed}
-                      <span class="decline">↓ {(previousZones.zones[key].averageSpeed - zone.averageSpeed).toFixed(1)} км/ч</span>
-                    {:else}
-                      <span class="no-change">Без изменений</span>
-                    {/if}
-                  </div>
-                {/if}
+    <!-- Assessment Results Section -->
+    <div class="assessment-results-section">
+      <h3 class="panel-title">Последние результаты оценочной тренировки</h3>
+      {#if assessmentResults && assessmentResults.length > 0}
+        <!-- Отображаем только последние результаты -->
+        <div class="color-panels-container">
+          {#each assessmentResults[0].segments as segment, i}
+            <div class="color-panel" style="background-color: {segment.color};" title="{segment.name}: {segment.avgSpeed} км/ч">
+              <div class="panel-content">
+                <div class="segment-name">{segment.name}</div>
+                <div class="segment-speed">{segment.avgSpeed} км/ч</div>
               </div>
             </div>
           {/each}
         </div>
       {:else}
-        <div class="no-zones-message">
-          <p>Пройдите оценочную тренировку для калибровки зон интенсивности</p>
+        <div class="no-assessment-message">
+          <p>Пройдите оценочную тренировку для отображения результатов</p>
         </div>
       {/if}
     </div>
     
-    <!-- Assessment Results Section -->
-    <div class="assessment-results-section">
-      <h3 class="panel-title">Результаты оценочных тренировок</h3>
-      <div class="assessment-results-container">
-        {#each assessmentResults as result, index}
-          <div class="assessment-result-card">
-            <div class="assessment-header">
-              <span class="assessment-date">{result.date}</span>
-              <span class="assessment-type">{result.type}</span>
-            </div>
-            <div class="color-panels-container">
-              {#each result.segments as segment, i}
-                <div class="color-panel" style="background-color: {segment.color};" title="{segment.name}: {segment.avgSpeed} км/ч">
-                  <div class="panel-content">
-                    <div class="segment-name">{segment.name}</div>
-                    <div class="segment-speed">{segment.avgSpeed} км/ч</div>
-                  </div>
-                </div>
-              {/each}
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
   </div>
   
   <!-- Settings Button -->
@@ -331,14 +256,6 @@
     color: rgba(255, 255, 255, 0.7);
   }
   
-  .intensity-zones-section {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.2);
-  }
-  
   .assessment-results-section {
     display: flex;
     flex-direction: column;
@@ -352,185 +269,6 @@
     color: white;
     font-weight: 600;
     text-align: center;
-  }
-  
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  
-  .stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    padding: 1rem;
-    text-align: center;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .stat-card-value {
-    display: block;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #db3eb1; /* Miami Pink */
-    margin-bottom: 0.25rem;
-  }
-  
-  .stat-card-label {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  /* Activity Panel */
-  .activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  /* Intensity Zones Panel */
-  .intensity-zones-panel {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 0.125rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    box-shadow: 
-      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
-      inset 0 0 2rem rgba(255, 255, 255, 0.2),
-      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
-      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
-    position: relative;
-    z-index: 15;
-    overflow: hidden;
-  }
-  
-  .zones-container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
-  }
-  
-  .zone-card {
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    text-align: center;
-    backdrop-filter: blur(5px);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .zone-header {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .zone-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-  
-  .zone-percentage {
-    font-size: 0.75rem;
-    opacity: 0.9;
-  }
-  
-  .zone-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.75rem;
-  }
-  
-  .zone-speed-range {
-    font-weight: 600;
-  }
-  
-  .zone-average-speed {
-    font-size: 0.7rem;
-    opacity: 0.9;
-  }
-  
-  .zone-comparison {
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-top: 0.25rem;
-  }
-  
-  .improvement {
-    color: #34C759; /* Green for improvement */
-  }
-  
-  .decline {
-    color: #FF3B30; /* Red for decline */
-  }
-  
-  .no-change {
-    color: #FFD700; /* Yellow for no change */
-  }
-  
-  .no-zones-message {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.7);
-    padding: 1rem;
-  }
-  
-  /* Assessment Results Panel */
-  .assessment-results-panel {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 0.125rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    box-shadow: 
-      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
-      inset 0 0 2rem rgba(255, 255, 255, 0.2),
-      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
-      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
-    position: relative;
-    z-index: 15;
-    overflow: hidden;
-  }
-  
-  .assessment-results-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .assessment-result-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    padding: 1rem;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .assessment-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .assessment-date {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .assessment-type {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #41B6E6; /* Miami Blue */
   }
   
   .color-panels-container {
@@ -576,36 +314,10 @@
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
   
-  .activity-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0.75rem;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .activity-date {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-    flex: 1;
-  }
-  
-  .activity-steps {
-    font-size: 1rem;
-    font-weight: 500;
-    color: white;
-    flex: 2;
+  .no-assessment-message {
     text-align: center;
-  }
-  
-  .activity-duration {
-    font-size: 0.875rem;
-    color: #41B6E6; /* Miami Blue */
-    flex: 1;
-    text-align: right;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1rem;
   }
   
   /* Settings Button */
@@ -627,37 +339,7 @@
     width: 100%;
     margin-top: 0.5rem;
     position: relative;
-    z-index: 5; /* Positioned above bubbles (z-index: 1) but below glass panels (z-index: 15) */
-  }
-  
-  .settings-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-0.125rem);
-    box-shadow: 
-      0 0.5rem 1rem rgba(0, 0, 0, 0.2),
-      inset 0 0.0625rem 0.1875rem rgba(255, 255, 255, 0.3);
-  }
-  
-  /* History Button */
-  .history-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 0.75rem;
-    color: white;
-    padding: 1rem;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    box-shadow: 
-      0 0.25rem 0.75rem rgba(0, 0, 0, 0.15),
-      inset 0 0.0625rem 0.125rem rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    width: 100%;
-    margin-top: 0.5rem;
-    position: relative;
-    z-index: 5; /* Positioned above bubbles (z-index: 1) but below glass panels (z-index: 15) */
+    z-index: 5;
   }
   
   /* Responsive design */
