@@ -48,7 +48,7 @@
   
   {#if showSettingsButton}
     <button class="header-button settings-button" on:click={handleSettings}>
-      <img src="/icons/settings.png" alt="Settings" class="button-icon-image" />
+      <img src="./icons/settings.png" alt="Settings" class="button-icon-image" />
     </button>
   {:else}
     <div class="button-placeholder"></div>
