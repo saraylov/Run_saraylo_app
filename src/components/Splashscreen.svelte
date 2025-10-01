@@ -53,7 +53,7 @@
 <div class="splash-screen {hideCursor ? 'hide-cursor' : ''} {fadeOut ? 'fade-out' : ''}" class:visible={backgroundVisible}>
   <div class="splash-content" class:visible={contentVisible}>
     <div class="logo-container" class:animate={contentVisible} style="transform: scale({logoScale});">
-      <img src="/image/logo/logo.png" alt="Logo" class="logo" />
+      <img src="./image/logo/logo.png" alt="Logo" class="logo" />
     </div>
     <h1 class="welcome-text" style="opacity: {textOpacity};">Добро пожаловать</h1>
   </div>
