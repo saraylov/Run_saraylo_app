@@ -3,6 +3,7 @@
   import { createEventDispatcher } from 'svelte'; // Import createEventDispatcher
   import Header from './Header.svelte';
   import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
+  import WorkoutSummaryModal from './WorkoutSummaryModal.svelte'; // Import the new modal component
   import mapboxgl from 'mapbox-gl';
   import { hideTabBar, showTabBar } from '../lib/tabBarStore.js'; // Import TabBar control functions
   import intensityZoneService from '../lib/intensityZoneService.js'; // Import Intensity Zone Service
@@ -279,11 +280,9 @@
   let currentSegmentTime = $state(0); // Time spent in current segment (seconds)
   let segmentSpeeds = $state([]); // To store speed data for each segment
 
-  // Final workout data (to be shown in modal)
-  let finalWorkoutData = null;
-  
-  // Modal state
-  let showModal = false;
+  // Final workout data
+  let finalWorkoutData = $state(null);
+  let showSummaryModal = $state(false);
 
   // Map variables
   let mapContainer;
@@ -696,18 +695,15 @@
       segments: segmentsWithAvgSpeeds // Include segments with average speeds
     };
     
-    // Phase 3: Show modal with results
-    showModal = true;
+    // Phase 3: Show the summary modal instead of immediately saving
+    showSummaryModal = true;
     
-    console.log('Тренировка завершена, показываем модальное окно');
+    console.log('Тренировка завершена и открыто модальное окно');
   }
   
   // Function to confirm and save workout data
   function confirmAndSaveWorkout() {
     if (!finalWorkoutData) return;
-    
-    // Close modal
-    showModal = false;
     
     // Check if workout duration exceeds 10 minutes (600 seconds)
     const isLongEnough = finalWorkoutData.isLongEnough;
@@ -749,17 +745,18 @@
     console.log('Тренировка сохранена и данные сброшены');
   }
   
-  // Function to cancel workout saving (close modal without saving)
-  function cancelWorkout() {
-    showModal = false;
-    
-    // TabBar visibility is now controlled by TrainingTabBar component
-    // showTabBar();
-    
-    // Reset stats
+  // Function to handle modal close
+  function handleModalClose() {
+    showSummaryModal = false;
+    // Reset stats after closing modal
     resetTrainingStats();
-    
-    console.log('Сохранение тренировки отменено');
+  }
+  
+  // Function to handle modal save
+  function handleModalSave() {
+    showSummaryModal = false;
+    // Save the workout data
+    confirmAndSaveWorkout();
   }
   
   // Function to reset training stats
@@ -1181,68 +1178,15 @@
   {:else}
     <ActiveTrainingTabBar on:pauseTraining={handlePauseTraining} on:finishTraining={handleFinishTraining} />
   {/if}
-
-  <!-- Modal Dialog for Workout Results -->
-  {#if showModal && finalWorkoutData}
-    <div class="modal-overlay" on:click={cancelWorkout}>
-      <div class="modal-content" on:click|stopPropagation={() => {}}>
-        <h2 class="modal-title">Результаты тренировки</h2>
-        
-        <!-- Workout Timeline with Average Speeds -->
-        <div class="modal-timeline-section">
-          <h3 class="section-subtitle">Сегменты тренировки</h3>
-          <WorkoutTimeline segments={finalWorkoutData.segments} showAvgSpeeds={true} />
-        </div>
-        
-        <div class="workout-results">
-          <div class="result-item">
-            <div class="result-label">Время</div>
-            <div class="result-value">{finalWorkoutData.time}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Расстояние</div>
-            <div class="result-value">{finalWorkoutData.distance}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Средняя скорость</div>
-            <div class="result-value">{finalWorkoutData.avgSpeed}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Макс. скорость</div>
-            <div class="result-value">{finalWorkoutData.maxSpeed}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Темп</div>
-            <div class="result-value">{finalWorkoutData.pace}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Калории</div>
-            <div class="result-value">{finalWorkoutData.calories}</div>
-          </div>
-          
-          <div class="result-item">
-            <div class="result-label">Шаги</div>
-            <div class="result-value">{finalWorkoutData.steps}</div>
-          </div>
-        </div>
-        
-        <div class="modal-actions">
-          <button class="modal-button cancel-button" on:click={cancelWorkout}>
-            Отмена
-          </button>
-          <button class="modal-button confirm-button" on:click={confirmAndSaveWorkout}>
-            Сохранить
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if }
 </div>
+
+<!-- Workout Summary Modal -->
+<WorkoutSummaryModal 
+  isVisible={showSummaryModal} 
+  workoutData={finalWorkoutData}
+  onClose={handleModalClose}
+  onSave={handleModalSave}
+/>
 
 <style>
   .training-container {
@@ -1365,10 +1309,7 @@
 
   /* Control Buttons at Bottom of Map */
   .control-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: auto; /* Push buttons to bottom */
+    gap: 0.75rem;
   }
 
   .control-button {
@@ -1386,8 +1327,8 @@
     box-shadow: 
       0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
       inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-    width: 60px; /* Fixed width for circular shape */
-    height: 60px; /* Fixed height for circular shape */
+    width: 50px; /* Fixed width for circular shape */
+    height: 50px; /* Fixed height for circular shape */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1400,8 +1341,8 @@
     position: absolute;
     top: -5px;
     left: -5px;
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     z-index: -1;
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -1620,129 +1561,6 @@
     font-weight: bold;
   }
 
-  /* Modal Styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1002; /* Increased to ensure it overlays TrainingTabBar */
-  }
-
-  .modal-content {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 0.125rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 1.5rem;
-    padding: 2rem;
-    box-shadow: 
-      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
-      inset 0 0 2rem rgba(255, 255, 255, 0.2),
-      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
-      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
-    position: relative;
-    z-index: 1003; /* Increased to ensure it overlays TrainingTabBar */
-    width: 76.5%;
-    max-width: 425px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .modal-title {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.5rem;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .modal-timeline-section {
-    margin-bottom: 1.5rem;
-  }
-  
-  .section-subtitle {
-    margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .workout-results {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .result-item {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    text-align: center;
-    backdrop-filter: blur(5px);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.15);
-  }
-
-  .result-label {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 0.5rem;
-  }
-
-  .result-value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: white;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-  }
-
-  .modal-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 0.75rem;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    box-shadow: 
-      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
-      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    flex: 1;
-    max-width: 200px;
-  }
-
-  .modal-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-
-  .cancel-button {
-    background: linear-gradient(90deg, #FF3B30, #FF9500);
-  }
-
-  .confirm-button {
-    background: linear-gradient(90deg, #34C759, #41B6E6);
-  }
-
   /* Responsive design */
   @media (max-width: 48rem) { /* 768px */
     .training-container {
@@ -1833,4 +1651,3 @@
     }
   }
 </style>
-

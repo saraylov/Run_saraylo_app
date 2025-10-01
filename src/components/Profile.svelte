@@ -23,18 +23,18 @@
     { date: "2023-06-11", steps: 15230, duration: "68 мин" }
   ]);
   
-  // Assessment results data
+  // Assessment results data with zero values initially
   let assessmentResults = $state([
     {
       id: 1,
       date: "2023-06-10",
       type: "Оценочная тренировка",
       segments: [
-        { name: 'Голубой', color: '#41B6E6', avgSpeed: 8.5, duration: 6 },
-        { name: 'Салатовый', color: '#90EE90', avgSpeed: 10.2, duration: 5 },
-        { name: 'Желтый', color: '#FFD700', avgSpeed: 12.8, duration: 5 },
-        { name: 'Оранжевый', color: '#FFA500', avgSpeed: 14.5, duration: 3 },
-        { name: 'Красный', color: '#FF0000', avgSpeed: 16.2, duration: 1 }
+        { name: 'Голубой', color: '#41B6E6', avgSpeed: 0, duration: 6 },
+        { name: 'Салатовый', color: '#90EE90', avgSpeed: 0, duration: 5 },
+        { name: 'Желтый', color: '#FFD700', avgSpeed: 0, duration: 5 },
+        { name: 'Оранжевый', color: '#FFA500', avgSpeed: 0, duration: 3 },
+        { name: 'Красный', color: '#FF0000', avgSpeed: 0, duration: 1 }
       ]
     },
     {
@@ -42,11 +42,11 @@
       date: "2023-05-28",
       type: "Оценочная тренировка",
       segments: [
-        { name: 'Голубой', color: '#41B6E6', avgSpeed: 7.8, duration: 6 },
-        { name: 'Салатовый', color: '#90EE90', avgSpeed: 9.5, duration: 5 },
-        { name: 'Желтый', color: '#FFD700', avgSpeed: 11.2, duration: 5 },
-        { name: 'Оранжевый', color: '#FFA500', avgSpeed: 13.8, duration: 3 },
-        { name: 'Красный', color: '#FF0000', avgSpeed: 15.1, duration: 1 }
+        { name: 'Голубой', color: '#41B6E6', avgSpeed: 0, duration: 6 },
+        { name: 'Салатовый', color: '#90EE90', avgSpeed: 0, duration: 5 },
+        { name: 'Желтый', color: '#FFD700', avgSpeed: 0, duration: 5 },
+        { name: 'Оранжевый', color: '#FFA500', avgSpeed: 0, duration: 3 },
+        { name: 'Красный', color: '#FF0000', avgSpeed: 0, duration: 1 }
       ]
     }
   ]);
