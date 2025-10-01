@@ -23,7 +23,7 @@
     duration: 30,
     calories: 320,
     intensity: "high",
-    icon: "/icons/run.png",
+    icon: "./icons/run.png",
     startTime: "2023-06-15T08:30:00",
     endTime: "2023-06-15T09:00:00",
     completed: false,
@@ -162,11 +162,11 @@
 
   // Icon mapping based on category
   const categoryIcons = {
-    'running': '/icons/run.png',
-    'treadmill': '/icons/treadmill.png',
-    'cycling': '/icons/cycling.png',
-    'walking': '/icons/walking.png',
-    'nordic_walking': '/icons/walking.png'
+    'running': './icons/run.png',
+    'treadmill': './icons/treadmill.png',
+    'cycling': './icons/cycling.png',
+    'walking': './icons/walking.png',
+    'nordic_walking': './icons/walking.png'
   };
 
   // Function to get segments for a workout
