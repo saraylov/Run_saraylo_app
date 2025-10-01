@@ -1,5 +1,6 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
+  import { createEventDispatcher } from 'svelte'; // Import createEventDispatcher
   import SplashScreen from './components/Splashscreen.svelte';
   import Home from './components/Home.svelte';
   import Settings from './components/Settings.svelte';
@@ -9,10 +10,10 @@
   import Exercises from './components/Exercises.svelte';
   import Training from './components/Training.svelte';
   import TabBar from './components/TabBar.svelte';
-  import ExercisesTabBar from './components/ExercisesTabBar.svelte';
   import ActivityRingsTest from './components/ActivityRingsTest.svelte';
   import History from './components/History.svelte';
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js';
+  import TapBarReady from './components/TapBarReady.svelte'; // Импорт нового компонента TapBarReady
 
   // State for authentication
   let isAuthenticated = $state(true); // Always authenticated
@@ -352,8 +353,8 @@
   <!-- Global TabBar component - hidden on training page -->
   {#if currentView !== 'training'}
     {#if currentView === 'exercises'}
-      <!-- Use custom ExercisesTabBar on Exercises page -->
-      <ExercisesTabBar on:startTraining={handleGoToTraining} on:tabChanged={handleTabChange} />
+      <!-- Используем TapBarReady на странице упражнений -->
+      <TapBarReady on:startTraining={handleGoToTraining} on:tabChanged={handleTabChange} />
     {:else}
       <!-- Use regular TabBar on other pages -->
       <TabBar on:centralButtonClicked={handleCentralButtonClick} on:tabChanged={handleTabChange} />

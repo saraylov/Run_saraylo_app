@@ -1,0 +1,177 @@
+/* TapBarReady Component Styles - Visual copy of TrainingTabBar */
+
+.tab-bar-ready {
+  position: fixed;
+  bottom: 2rem; /* Поднять от нижнего края экрана */
+  left: 50%; /* Центрировать горизонтально */
+  transform: translateX(-50%); /* Сдвинуть влево на половину ширины */
+  width: 90%; /* Ширина панели */
+  max-width: 31.25rem; /* Максимальная ширина 500px */
+  height: 60px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.5rem; /* Закругленные углы */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000; /* Ensure TabBar is above all content */
+  box-shadow: 
+    0 0.5rem 2.5rem rgba(0, 0, 0, 0.25),
+    inset 0 0 1.25rem rgba(255, 255, 255, 0.15),
+    inset 0 -0.125rem 0.25rem rgba(255, 255, 255, 0.1),
+    inset 0 0.125rem 0.25rem rgba(255, 255, 255, 0.15);
+  padding: 5px 20px;
+}
+
+.tab-group-ready {
+  display: flex;
+  flex: 1;
+  justify-content: space-around;
+}
+
+.tab-group-ready.left {
+  margin-right: 47px; /* Half of increased central button width */
+}
+
+.tab-group-ready.right {
+  margin-left: 47px; /* Half of increased central button width */
+}
+
+/* Adjust tab items to make space for central button */
+.tab-item-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 50px;
+}
+
+.tab-item-ready:hover {
+  color: white;
+  transform: translateY(-2px);
+}
+
+.tab-icon-ready {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-label-ready {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.image-icon-ready {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Independent central icon styling - increased to 48x48 pixels */
+.central-tab-icon-ready {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.central-image-icon-ready {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* Central button container - adjusted to accommodate larger icon */
+.central-button-container-ready {
+  position: absolute;
+  top: -32px; /* Adjusted position for larger button */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 94px; /* Increased size to accommodate 48px icon */
+  height: 94px; /* Increased size to accommodate 48px icon */
+  z-index: 1001; /* Ensure central button is above TabBar */
+  cursor: pointer;
+}
+
+/* Progress circle around central button */
+.central-progress-circle-ready {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 104px;
+  height: 104px;
+  z-index: 0;
+  transform: rotate(-90deg);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Cutout effect - creates the illusion of a hole in the TabBar */
+.central-button-cutout-ready {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    inset 0 0 0 5px rgba(255, 255, 255, 0.1),
+    inset 0 0 10px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+/* Central button - slightly smaller than cutout to create gap */
+.central-button-ready {
+  position: absolute;
+  top: 5px; /* 5px gap from cutout */
+  left: 5px;
+  width: 84px; /* Increased size to accommodate 48px icon */
+  height: 84px; /* Increased size to accommodate 48px icon */
+  border-radius: 50%;
+  background: linear-gradient(135deg, #41B6E6, #34C759); /* Green gradient for start button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 2px 2px rgba(255, 255, 255, 0.3);
+  transform-origin: center;
+}
+
+.central-button-ready:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.4),
+    inset 0 2px 2px rgba(255, 255, 255, 0.4);
+}
+
+.central-button-ready:active {
+  transform: translateY(1px) scale(0.95);
+  box-shadow: 
+    0 2px 5px rgba(0, 0, 0, 0.2),
+    inset 0 2px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Specific icon styling to ensure independence */
+.health-icon-ready, .devices-icon-ready, .profile-icon-ready {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
