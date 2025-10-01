@@ -4,28 +4,20 @@
   import ActivityRings from './ActivityRings.svelte'; // Import the new Activity Rings component
 
   // User data - permanent authentication
-  let user = {
+  let user = $state({
     id: 123456789,
     first_name: "Тестовый",
     last_name: "Пользователь",
     username: "testuser"
-  };
-  let isLoading = false; // No loading needed for permanent auth
-  export let onLogout; // Function to call when user "logs out" (optional)
-  export let onSettings; // Function to call when user wants to go to settings (optional)
+  });
+  let isLoading = $state(false); // No loading needed for permanent auth
   
-  // Function to navigate to test page (optional)
-  export let onTest = undefined; // Function to call when user wants to go to test page
-
-  // Function to navigate to health page
-  export let onHealth = undefined; // Function to call when user wants to go to health page
-
-  // Function to navigate to exercises page
-  export let onExercises = undefined; // Function to call when user wants to go to exercises page
+  // Function props using Svelte 5 runes
+  const { onLogout, onSettings, onTest, onHealth, onExercises } = $props();
 
   // Steps data
-  let steps = 7234; // Example steps data
-  let stepsGoal = 10000; // Default goal
+  let steps = $state(7234); // Example steps data
+  let stepsGoal = $state(10000); // Default goal
 
   // Logout function
   function logout() {

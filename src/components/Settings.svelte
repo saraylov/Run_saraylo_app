@@ -3,26 +3,18 @@
   import AuthService from '../lib/AuthService.js';
   import Header from './Header.svelte'; // Import the new Header component
 
-  // User data prop (for permanent auth mode)
-  export let user = null;
-  
-  // Export function to handle back navigation
-  export let onBack; // Function to call when user wants to go back (optional)
-  
-  // Export function to handle logout
-  export let onLogout = null; // Function to call when user wants to logout (optional)
-  
-  // Export function to handle navigation to Bluetooth devices
-  export let onBluetoothDevices = null; // Function to call when user wants to go to Bluetooth devices page
+  // Props using Svelte 5 runes
+  const { user: userProp, onBack, onLogout, onBluetoothDevices } = $props();
 
   // Fallback to AuthService if no user prop provided
-  let isLoading = true;
-  let errorMessage = '';
+  let isLoading = $state(true);
+  let errorMessage = $state('');
+  let user = $state(userProp || null); // Local reactive user variable
   
   // Settings state
-  let notificationsEnabled = true;
-  let darkMode = false;
-  let language = 'ru';
+  let notificationsEnabled = $state(true);
+  let darkMode = $state(false);
+  let language = $state('ru');
   
   // Available languages
   const languages = [

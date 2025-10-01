@@ -1,33 +1,40 @@
 <script>
-  import { onMount, createEventDispatcher } from 'svelte';
-
-  const dispatch = createEventDispatcher();
+  import { onMount } from 'svelte';
 
   // State for animation phases
-  let backgroundVisible = false;
-  let contentVisible = false;
-  let fadeOut = false;
-  let logoScale = 1;
-  let textOpacity = 0;
+  let backgroundVisible = $state(false);
+  let contentVisible = $state(false);
+  let fadeOut = $state(false);
+  let logoScale = $state(1);
+  let textOpacity = $state(0);
 
   // Cursor hiding and input blocking
-  let hideCursor = true;
+  let hideCursor = $state(true);
+  
+  // Event handler for splash completion - properly defined as a prop
+  const { onSplashComplete } = $props();
 
   onMount(() => {
+    console.log('SplashScreen mounted');
     // Phase 1: Background fade-in (1.5 seconds)
     setTimeout(() => {
+      console.log('Background visible');
       backgroundVisible = true;
     }, 0);
 
     // Phase 2: Content animations (after 1.5 seconds)
     setTimeout(() => {
+      console.log('Content visible');
       contentVisible = true;
       // Animate logo scale
       let scale = 1;
       const scaleInterval = setInterval(() => {
         scale += 0.02;
         logoScale = Math.min(scale, 1.1);
-        if (scale >= 1.1) clearInterval(scaleInterval);
+        if (scale >= 1.1) {
+          clearInterval(scaleInterval);
+          console.log('Logo scale animation complete');
+        }
       }, 20);
       
       // Animate text opacity
@@ -35,16 +42,21 @@
       const opacityInterval = setInterval(() => {
         opacity += 0.05;
         textOpacity = Math.min(opacity, 1);
-        if (opacity >= 1) clearInterval(opacityInterval);
+        if (opacity >= 1) {
+          clearInterval(opacityInterval);
+          console.log('Text opacity animation complete');
+        }
       }, 50);
     }, 1500);
 
     // Phase 3: Start fade-out transition (after 4 seconds)
     setTimeout(() => {
+      console.log('Starting fade out');
       fadeOut = true;
       // Dispatch event when fade-out starts
       setTimeout(() => {
-        dispatch('splashComplete');
+        console.log('Calling onSplashComplete');
+        if (onSplashComplete) onSplashComplete();
       }, 1500); // Match the fade-out duration
     }, 4000);
   });
@@ -53,7 +65,7 @@
 <div class="splash-screen {hideCursor ? 'hide-cursor' : ''} {fadeOut ? 'fade-out' : ''}" class:visible={backgroundVisible}>
   <div class="splash-content" class:visible={contentVisible}>
     <div class="logo-container" class:animate={contentVisible} style="transform: scale({logoScale});">
-      <img src="./image/logo/logo.png" alt="Logo" class="logo" />
+      <img src="/image/logo/logo.png" alt="Logo" class="logo" />
     </div>
     <h1 class="welcome-text" style="opacity: {textOpacity};">Добро пожаловать</h1>
   </div>

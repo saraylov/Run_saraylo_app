@@ -1,96 +1,97 @@
 <script>
-	// Event dispatcher for communicating with parent components
-	import { createEventDispatcher } from 'svelte';
-	const dispatch = createEventDispatcher();
-	
-	// Long press variables for central button
-	let pressTimer = null;
-	let pressProgress = 0;
-	let isPressing = false;
-	let centralButtonElement = null;
-	
-	// Function to handle central button long press start
-	function handleCentralButtonPressStart(event) {
-		if (isPressing) return;
-		
-		isPressing = true;
-		pressProgress = 0;
-		
-		// Clear any existing timer
-		if (pressTimer) {
-			clearInterval(pressTimer);
-		}
-		
-		// Start progress tracking
-		const startTime = Date.now();
-		const duration = 2000; // 2 seconds as requested
-		
-		pressTimer = setInterval(() => {
-			const elapsed = Date.now() - startTime;
-			pressProgress = Math.min(1, elapsed / duration);
-			
-			// Update button scale based on progress (0% to 20% increase)
-			if (centralButtonElement) {
-				const scale = 1 + (0.2 * pressProgress);
-				centralButtonElement.style.transform = `scale(${scale})`;
-			}
-			
-			// Check if 2 seconds have passed
-			if (elapsed >= duration) {
-				clearInterval(pressTimer);
-				pressTimer = null;
-				isPressing = false;
-				pressProgress = 1;
-				
-				// Trigger start training
-				dispatch('startTraining');
-			}
-		}, 10); // Update every 10ms for smooth animation
-	}
-	
-	// Function to handle central button press end/cancel
-	function handleCentralButtonPressEnd() {
-		if (!isPressing) return;
-		
-		isPressing = false;
-		
-		// Clear timer
-		if (pressTimer) {
-			clearInterval(pressTimer);
-			pressTimer = null;
-		}
-		
-		// Reset button scale
-		if (centralButtonElement) {
-			centralButtonElement.style.transform = 'scale(1)';
-		}
-		
-		pressProgress = 0;
-	}
-	
-	// Functions to handle each tab click with specific values
-	function onHomeClick() {
-		dispatch('tabChanged', { tab: 'home' });
-	}
-	
-	function onProfileClick() {
-		dispatch('tabChanged', { tab: 'profile' });
-	}
-	
-	// Function to navigate to health page
-	function onHealthClick() {
-		dispatch('tabChanged', { tab: 'health' });
-	}
-	
-	// Function to navigate to Bluetooth devices
-	function onDevicesClick() {
-		dispatch('tabChanged', { tab: 'bluetooth' });
-	}
-	
-	// Updated function to navigate to profile instead of settings
-	function onSettingsClick() {
-		dispatch('tabChanged', { tab: 'profile' });
-	}
+  // Event dispatcher for communicating with parent components
+  import { createEventDispatcher } from 'svelte';
+  const dispatch = createEventDispatcher();
+  
+  // Long press variables for central button
+  let pressTimer = $state(null);
+  let pressProgress = $state(0);
+  let isPressing = $state(false);
+  let centralButtonElement = $state(null);
+  
+  // Function to handle central button long press start
+  function handleCentralButtonPressStart(event) {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    // Clear any existing timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    // Start progress tracking
+    const startTime = Date.now();
+    const duration = 2000; // 2 seconds as requested
+    
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(1, elapsed / duration);
+      
+      // Update button scale based on progress (0% to 20% increase)
+      if (centralButtonElement) {
+        const scale = 1 + (0.2 * pressProgress);
+        centralButtonElement.style.transform = `scale(${scale})`;
+      }
+      
+      // Check if 2 seconds have passed
+      if (elapsed >= duration) {
+        clearInterval(pressTimer);
+        pressTimer = null;
+        isPressing = false;
+        pressProgress = 1;
+        
+        // Trigger start training
+        console.log('Dispatching startTraining event');
+        dispatch('startTraining');
+      }
+    }, 10); // Update every 10ms for smooth animation
+  }
+  
+  // Function to handle central button press end/cancel
+  function handleCentralButtonPressEnd() {
+    if (!isPressing) return;
+    
+    isPressing = false;
+    
+    // Clear timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+      pressTimer = null;
+    }
+    
+    // Reset button scale
+    if (centralButtonElement) {
+      centralButtonElement.style.transform = 'scale(1)';
+    }
+    
+    pressProgress = 0;
+  }
+  
+  // Functions to handle each tab click with specific values
+  function onHomeClick() {
+    dispatch('tabChanged', { tab: 'home' });
+  }
+  
+  function onProfileClick() {
+    dispatch('tabChanged', { tab: 'profile' });
+  }
+  
+  // Function to navigate to health page
+  function onHealthClick() {
+    dispatch('tabChanged', { tab: 'health' });
+  }
+  
+  // Function to navigate to Bluetooth devices
+  function onDevicesClick() {
+    dispatch('tabChanged', { tab: 'bluetooth' });
+  }
+  
+  // Updated function to navigate to profile instead of settings
+  function onSettingsClick() {
+    dispatch('tabChanged', { tab: 'profile' });
+  }
 </script>
 
 <!-- Training TabBar - always visible on training page -->
@@ -99,14 +100,14 @@
 		<div class="tab-item" on:click={onHomeClick}>
 			<div class="tab-icon">
 				<!-- Home icon -->
-				<img src="./icons/home.png" alt="Home" class="image-icon" />
+				<img src="/icons/home.png" alt="Home" class="image-icon" />
 			</div>
 			<span class="tab-label">Статистика</span>
 		</div>
 		<div class="tab-item" on:click={onHealthClick}>
 			<div class="tab-icon">
 				<!-- Health icon -->
-				<img src="./icons/health.png" alt="Health" class="image-icon health-icon" />
+				<img src="/icons/health.png" alt="Health" class="image-icon health-icon" />
 			</div>
 			<span class="tab-label">Здоровье</span>
 		</div>
@@ -139,7 +140,7 @@
 		<div class="central-button" bind:this={centralButtonElement}>
 			<div class="central-tab-icon">
 				<!-- Central icon - play icon for starting training -->
-				<img src="./icons/play.png" alt="Start Training" class="central-image-icon" />
+				<img src="/icons/play.png" alt="Start Training" class="central-image-icon" />
 			</div>
 		</div>
 	</div>
@@ -149,7 +150,7 @@
 		<div class="tab-item" on:click={onDevicesClick}>
 			<div class="tab-icon">
 				<!-- Devices icon -->
-				<img src="./icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
+				<img src="/icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
 			</div>
 			<span class="tab-label">Устройства</span>
 		</div>
@@ -157,7 +158,7 @@
 		<div class="tab-item" on:click={onSettingsClick}>
 			<div class="tab-icon">
 				<!-- Settings icon repurposed for Profile -->
-				<img src="./icons/Profile.png" alt="Profile" class="image-icon profile-icon" />
+				<img src="/icons/Profile.png" alt="Profile" class="image-icon profile-icon" />
 			</div>
 			<span class="tab-label">Профиль</span>
 		</div>

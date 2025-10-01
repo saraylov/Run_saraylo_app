@@ -3,38 +3,28 @@
   import Header from './Header.svelte'; // Import the Header component
   import intensityZoneService from '../lib/intensityZoneService.js'; // Import the Intensity Zone Service
 
-  // User data - this would typically come from a store or API
-  export let user = {
-    id: 123456789,
-    first_name: "Тестовый",
-    last_name: "Пользователь",
-    username: "testuser",
-    avatar: "./images/default-avatar.png", // Default avatar - changed to relative path
-    join_date: "2023-01-15",
-    total_steps: 125430,
-    achievements: 15,
-    level: 7
-  };
-  
+  // Props using Svelte 5 runes
+  const { user, onBack, onSettings, onHistory } = $props();
+
   // Stats data
-  let stats = {
+  let stats = $state({
     daily_average: 8500,
     weekly_total: 59500,
     monthly_total: 255000,
     best_day: 15230
-  };
+  });
   
   // Recent activity data
-  let recentActivity = [
+  let recentActivity = $state([
     { date: "2023-06-15", steps: 10230, duration: "45 мин" },
     { date: "2023-06-14", steps: 8750, duration: "38 мин" },
     { date: "2023-06-13", steps: 12540, duration: "52 мин" },
     { date: "2023-06-12", steps: 7620, duration: "35 мин" },
     { date: "2023-06-11", steps: 15230, duration: "68 мин" }
-  ];
+  ]);
   
   // Assessment results data
-  let assessmentResults = [
+  let assessmentResults = $state([
     {
       id: 1,
       date: "2023-06-10",
@@ -59,7 +49,7 @@
         { name: 'Красный', color: '#FF0000', avgSpeed: 15.1, duration: 1 }
       ]
     }
-  ];
+  ]);
   
   // Function to format numbers with thousands separators
   function formatNumber(num) {
@@ -73,15 +63,6 @@
     const diffTime = Math.abs(today.getTime() - joinDate.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
-  
-  // Function to go back to home
-  export let onBack;
-  
-  // Function to handle settings navigation
-  export let onSettings;
-  
-  // Function to handle history navigation
-  export let onHistory;
 </script>
 
 <Header title="Профиль" showSettingsButton={true} showHistoryButton={true} onSettings={onSettings} onHistory={onHistory} />

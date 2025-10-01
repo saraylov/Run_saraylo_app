@@ -2,14 +2,16 @@
   import { onMount } from 'svelte';
   
   // Export props for customization
-  export let title = 'Заголовок';
-  export let showBackButton = false;
-  export let showSettingsButton = false;
-  export let showHistoryButton = false; // New prop to control history button
-  export let showCircularButton = false; // New prop to control circular button
-  export let onBack = null;
-  export let onSettings = null;
-  export let onHistory = null; // New prop for history function
+  const { 
+    title = 'Заголовок',
+    showBackButton = false,
+    showSettingsButton = false,
+    showHistoryButton = false, // New prop to control history button
+    showCircularButton = false, // New prop to control circular button
+    onBack = null,
+    onSettings = null,
+    onHistory = null
+  } = $props();
   
   // Handle back button click
   function handleBack() {
@@ -29,11 +31,11 @@
 
 <header class="unified-header">
   {#if showBackButton}
-    <button class="header-button back-button" on:click={handleBack}>
+    <button class="header-button back-button" onclick={handleBack}>
       <span class="button-icon">←</span>
     </button>
   {:else if showHistoryButton}
-    <button class="header-button history-button" on:click={handleHistory}>
+    <button class="header-button history-button" onclick={handleHistory}>
       <span class="button-icon">H</span>
     </button>
   {:else if showCircularButton}
@@ -47,8 +49,8 @@
   <h1 class="header-title">{title}</h1>
   
   {#if showSettingsButton}
-    <button class="header-button settings-button" on:click={handleSettings}>
-      <img src="./icons/settings.png" alt="Settings" class="button-icon-image" />
+    <button class="header-button settings-button" onclick={handleSettings}>
+      <img src="/icons/settings.png" alt="Settings" class="button-icon-image" />
     </button>
   {:else}
     <div class="button-placeholder"></div>

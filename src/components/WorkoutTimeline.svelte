@@ -2,11 +2,7 @@
   import { onMount } from 'svelte';
 
   // Define the 5 segment types with their specific colors and durations
-  export let segments = [];
-  export let totalDuration = 0;
-  export let className = '';
-  export let currentTime = 0; // Add currentTime prop to track training progress
-  export let showAvgSpeeds = false; // New prop to control average speed display
+  const { segments = [], totalDuration = 0, className = '', currentTime = 0, showAvgSpeeds = false } = $props();
 
   // Define the standard assessment segments
   const assessmentSegments = [
@@ -66,8 +62,8 @@
   }
 
   // Process segments on mount
-  let processedSegments = [];
-  let displayTotalDuration = 0;
+  let processedSegments = $state([]);
+  let displayTotalDuration = $state(0);
   
   onMount(() => {
     processedSegments = processSegments(segments);
@@ -75,21 +71,21 @@
   });
 
   // Re-process when segments change
-  $: {
+  $effect(() => {
     processedSegments = processSegments(segments);
     displayTotalDuration = totalDuration || calculateTotalDuration(segments);
-  }
+  });
 
   // Calculate the position of the marker based on current time
-  let markerPosition = 0;
-  $: {
+  let markerPosition = $state(0);
+  $effect(() => {
     if (currentTime > 0 && displayTotalDuration > 0) {
       // Calculate the percentage of time elapsed
       markerPosition = Math.min(100, (currentTime / (displayTotalDuration * 60)) * 100);
     } else {
       markerPosition = 0;
     }
-  }
+  });
 </script>
 
 <div class={`workout-timeline ${className}`}>

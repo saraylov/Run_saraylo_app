@@ -11,6 +11,7 @@
   import TabBar from './components/TabBar.svelte';
   import ActivityRingsTest from './components/ActivityRingsTest.svelte';
   import History from './components/History.svelte';
+  import HotReloadDemo from './components/HotReloadDemo.svelte';
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js';
 
   // State for authentication
@@ -38,12 +39,8 @@
   let bubbles = $state([]);
   let bubbleIdCounter = $state(0);
   
-  // Add debugging
-  console.log('App component mounting');
-  
   // Initialize bubble animation
   onMount(() => {
-    console.log('App onMount called');
     // Start bubble animation
     animateBubbles();
     
@@ -53,7 +50,6 @@
   
   // Handle splash screen transition
   function handleSplashTransition() {
-    console.log('handleSplashTransition called');
     splashTransitioning = true;
     panelAnimationStage = 1; // Start panel appearing animation
     
@@ -216,9 +212,25 @@
     console.log('currentView is now:', currentView);
   }
   
+  // Handle navigation to hot reload demo
+  function handleGoToHotReloadDemo() {
+    console.log('handleGoToHotReloadDemo called, setting currentView to hot-reload-demo');
+    currentView = 'hot-reload-demo';
+    hideTabBar(); // Hide TabBar on demo page
+    console.log('currentView is now:', currentView);
+  }
+  
   // Handle navigation back from test
   function handleTestBack() {
     console.log('handleTestBack called, setting currentView to home');
+    currentView = 'home';
+    showTabBar(); // Show TabBar when returning to home
+    console.log('currentView is now:', currentView);
+  }
+  
+  // Handle navigation back from hot reload demo
+  function handleHotReloadDemoBack() {
+    console.log('handleHotReloadDemoBack called, setting currentView to home');
     currentView = 'home';
     showTabBar(); // Show TabBar when returning to home
     console.log('currentView is now:', currentView);
@@ -292,6 +304,10 @@
         // Repurpose settings tab to navigate to profile
         currentView = 'profile';
         break;
+      case 'hot-reload-demo':
+        // Navigate to Hot Reload Demo page
+        currentView = 'hot-reload-demo';
+        break;
       default:
         currentView = 'home';
     }
@@ -308,7 +324,7 @@
 <main>
   <!-- Show splash screen initially -->
   {#if showSplash}
-    <SplashScreen onSplashComplete={handleSplashTransition} />
+    <SplashScreen on:splashComplete={handleSplashTransition} />
   {:else}
     <!-- Bubbles background -->
     <div class="bubbles-container">
@@ -344,6 +360,8 @@
       <History onBack={handleHistoryBack} onSettings={handleGoToSettings} />
     {:else if currentView === 'test'}
       <ActivityRingsTest />
+    {:else if currentView === 'hot-reload-demo'}
+      <HotReloadDemo />
     {/if}
 
   {/if}

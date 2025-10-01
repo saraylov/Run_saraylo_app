@@ -243,18 +243,18 @@
   });
 
   // Training state
-  let trainingStarted = false;
-  let trainingPaused = false;
-  let startTime = null;
-  let elapsedTime = 0;
-  let distance = 0;
-  let speed = 0;
+  let trainingStarted = $state(false);
+  let trainingPaused = $state(false);
+  let startTime = $state(null);
+  let elapsedTime = $state(0);
+  let distance = $state(0);
+  let speed = $state(0);
   
   // Timer interval
   let timerInterval = null;
 
   // Mock real-time training stats
-  let trainingStats = {
+  let trainingStats = $state({
     time: "00:00:00",
     distance: "0.0 km",
     speed: "0.0 km/h",
@@ -263,19 +263,19 @@
     pace: "0:00 /km",
     calories: "0 kcal",
     steps: "0"
-  };
+  });
 
   // Cumulative values that should only increase
-  let totalDistance = 0; // in km
-  let totalSteps = 0; // count
-  let totalCalories = 0; // count
-  let lastUpdateTime = 0; // for calculating increments
+  let totalDistance = $state(0); // in km
+  let totalSteps = $state(0); // count
+  let totalCalories = $state(0); // count
+  let lastUpdateTime = $state(0); // for calculating increments
   
   // Segment tracking
-  let currentWorkoutSegments = [];
-  let currentSegmentIndex = 0;
-  let currentSegmentTime = 0; // Time spent in current segment (seconds)
-  let segmentSpeeds = []; // To store speed data for each segment
+  let currentWorkoutSegments = $state([]);
+  let currentSegmentIndex = $state(0);
+  let currentSegmentTime = $state(0); // Time spent in current segment (seconds)
+  let segmentSpeeds = $state([]); // To store speed data for each segment
 
   // Final workout data (to be shown in modal)
   let finalWorkoutData = null;
@@ -853,8 +853,8 @@
   }
 
   // Export functions for parent component
-  export let onBack;
-  export let onSettings;
+  // Props using Svelte 5 runes
+  const { onBack, onSettings } = $props();
 
   // Initialize the Mapbox map
   function initializeMap() {
@@ -981,6 +981,12 @@
     dispatch('tabChanged', { tab });
   }
   
+  // Function to handle start training from TrainingTabBar
+  function handleStartTraining() {
+    console.log('Received startTraining event in Training.svelte');
+    startTraining();
+  }
+  
   // Function to handle pause training from ActiveTrainingTabBar
   function handlePauseTraining() {
     pauseTraining();
@@ -990,6 +996,8 @@
   function handleFinishTraining() {
     finishTraining();
   }
+  
+  
 </script>
 
 <Header title="Тренировка" showSettingsButton={false} onSettings={onSettings} onBack={onBack} />
@@ -1057,7 +1065,7 @@
 
   <!-- Training TabBar - show regular tab bar when not training, active tab bar when training -->
   {#if !trainingStarted}
-    <TrainingTabBar on:startTraining={startTraining} on:tabChanged={handleTabChange} />
+    <TrainingTabBar on:startTraining={handleStartTraining} on:tabChanged={handleTabChange} />
   {:else}
     <ActiveTrainingTabBar on:pauseTraining={handlePauseTraining} on:finishTraining={handleFinishTraining} />
   {/if}

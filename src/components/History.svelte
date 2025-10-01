@@ -3,28 +3,30 @@
   import Header from './Header.svelte';
   import WorkoutTimeline from './WorkoutTimeline.svelte';
   
-  // Export functions for parent component
-  export let onBack;
-  export let onSettings;
+  // Export functions for parent component using Svelte 5 runes
+  const { onBack, onSettings } = $props();
   
   // Workout history data
-  let workoutHistory = [];
+  let workoutHistory = $state([]);
   
   // Filter options
-  let filterType = 'all';
-  let filterDate = 'all';
-  let filterDuration = 'all';
+  let filterType = $state('all');
+  let filterDate = $state('all');
+  let filterDuration = $state('all');
   
   // Comparison state
-  let comparisonMode = false;
-  let selectedWorkouts = [];
+  let comparisonMode = $state(false);
+  let selectedWorkouts = $state([]);
   
   // Detail view state
-  let detailedView = false;
-  let selectedWorkout = null;
+  let detailedView = $state(false);
+  let selectedWorkout = $state(null);
   
   // Comparison view state
-  let comparisonView = false;
+  let comparisonView = $state(false);
+  
+  // Get filtered and sorted workout history
+  let filteredHistory = $derived(applyFilters());
   
   // Load workout history from localStorage on component mount
   onMount(() => {
@@ -234,9 +236,6 @@
     
     return filtered;
   }
-  
-  // Get filtered and sorted workout history
-  $: filteredHistory = applyFilters();
   
   // Get speed progress data for chart
   function getSpeedProgressData() {
@@ -585,7 +584,7 @@
           <option value="60+">Более 60 минут</option>
         </select>
         
-        <button class="filter-button" on:click={applyFilters}>
+        <button class="filter-button" onclick={applyFilters}>
           Применить
         </button>
       </div>
@@ -593,15 +592,15 @@
       <!-- Comparison Controls -->
       <div class="comparison-controls">
         {#if !comparisonMode}
-          <button class="comparison-button" on:click={startComparison}>
+          <button class="comparison-button" onclick={startComparison}>
             Сравнить тренировки
           </button>
         {:else}
-          <button class="comparison-button active" on:click={cancelComparison}>
+          <button class="comparison-button active" onclick={cancelComparison}>
             Отмена
           </button>
           {#if selectedWorkouts.length === 2}
-            <button class="comparison-button primary" on:click={showComparisonView}>
+            <button class="comparison-button primary" onclick={showComparisonView}>
               Сравнить выбранные
             </button>
           {/if}
@@ -623,7 +622,15 @@
           {#each filteredHistory as workout}
             <div 
               class="workout-item {comparisonMode ? 'selectable' : ''} {selectedWorkouts.some(w => w.id === workout.id) ? 'selected' : ''}"
-              on:click={() => comparisonMode ? toggleWorkoutSelection(workout) : showWorkoutDetail(workout)}
+              onclick={() => comparisonMode ? toggleWorkoutSelection(workout) : showWorkoutDetail(workout)}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  comparisonMode ? toggleWorkoutSelection(workout) : showWorkoutDetail(workout);
+                }
+              }}
             >
               <div class="workout-summary">
                 <div class="workout-header">

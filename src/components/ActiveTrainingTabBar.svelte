@@ -1,62 +1,62 @@
 <script>
-	// Event dispatcher for communicating with parent components
-	import { createEventDispatcher } from 'svelte';
-	const dispatch = createEventDispatcher();
-	
-	// State to track if training is paused
-	let isPaused = false;
-	
-	// Long press state for finish button
-	let pressTimer = null;
-	let pressProgress = 0;
-	let isPressing = false;
-	
-	
-	// Function to handle pause/resume button click
-	function onPauseClick() {
-		isPaused = !isPaused;
-		dispatch('pauseTraining');
-	}
-	
-	// Function to handle finish button click
-	function onFinishClick() {
-		dispatch('finishTraining');
-	}
-	
-	// Long press handlers for finish button
-	function handleFinishPressStart() {
-		if (isPressing) return;
-		
-		isPressing = true;
-		pressProgress = 0;
-		
-		// Clear any existing timer
-		if (pressTimer) {
-			clearInterval(pressTimer);
-		}
-		
-		// Start the 2-second timer
-		const startTime = Date.now();
-		pressTimer = setInterval(() => {
-			const elapsed = Date.now() - startTime;
-			pressProgress = Math.min(elapsed / 2000, 1); // 2 seconds to complete
-			
-			if (pressProgress >= 1) {
-				clearInterval(pressTimer);
-				isPressing = false;
-				pressProgress = 0;
-				onFinishClick(); // Trigger the finish action
-			}
-		}, 10);
-	}
-	
-	function handleFinishPressEnd() {
-		if (!isPressing) return;
-		
-		clearInterval(pressTimer);
-		isPressing = false;
-		pressProgress = 0;
-	}
+  // Event dispatcher for communicating with parent components
+  import { createEventDispatcher } from 'svelte';
+  const dispatch = createEventDispatcher();
+  
+  // State to track if training is paused
+  let isPaused = $state(false);
+  
+  // Long press state for finish button
+  let pressTimer = $state(null);
+  let pressProgress = $state(0);
+  let isPressing = $state(false);
+  
+  
+  // Function to handle pause/resume button click
+  function onPauseClick() {
+    isPaused = !isPaused;
+    dispatch('pauseTraining');
+  }
+  
+  // Function to handle finish button click
+  function onFinishClick() {
+    dispatch('finishTraining');
+  }
+  
+  // Long press handlers for finish button
+  function handleFinishPressStart() {
+    if (isPressing) return;
+    
+    isPressing = true;
+    pressProgress = 0;
+    
+    // Clear any existing timer
+    if (pressTimer) {
+      clearInterval(pressTimer);
+    }
+    
+    // Start the 2-second timer
+    const startTime = Date.now();
+    pressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      pressProgress = Math.min(elapsed / 2000, 1); // 2 seconds to complete
+      
+      if (pressProgress >= 1) {
+        clearInterval(pressTimer);
+        isPressing = false;
+        pressProgress = 0;
+        onFinishClick(); // Trigger the finish action
+      }
+    }, 10);
+  }
+  
+  function handleFinishPressEnd() {
+    if (!isPressing) return;
+    
+    clearInterval(pressTimer);
+    isPressing = false;
+    pressProgress = 0;
+  }
 </script>
 
 <!-- Active Training TabBar with Pause/Resume and Finish buttons -->
@@ -67,7 +67,7 @@
 			<div class="tab-item pause-item" on:click={onPauseClick}>
 				<div class="tab-icon">
 					<!-- Pause icon -->
-					<img src="./icons/pause.png" alt="Pause" class="image-icon" />
+					<img src="/icons/pause.png" alt="Pause" class="image-icon" />
 				</div>
 				<span class="tab-label">Пауза</span>
 			</div>
@@ -76,7 +76,7 @@
 			<div class="tab-item resume-item" on:click={onPauseClick}>
 				<div class="tab-icon">
 					<!-- Play icon for resume -->
-					<img src="./icons/play.png" alt="Resume" class="image-icon" />
+					<img src="/icons/play.png" alt="Resume" class="image-icon" />
 				</div>
 				<span class="tab-label">Продолжить</span>
 			</div>
@@ -95,7 +95,7 @@
 			
 			<div class="tab-icon">
 				<!-- Finish icon -->
-				<img src="./icons/stop.png" alt="Finish" class="image-icon" />
+				<img src="/icons/stop.png" alt="Finish" class="image-icon" />
 			</div>
 			<span class="tab-label">Завершить</span>
 		</div>

@@ -108,9 +108,8 @@
     }, 1500);
   }
 
-  // Export functions for parent component
-  export let onBack;
-  export let onSettings;
+  // Props using Svelte 5 runes
+  const { onBack, onSettings } = $props();
 </script>
 
 <Header title="Устройства" showSettingsButton={true} onSettings={onSettings} />

@@ -1,14 +1,14 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import hotReloadEnhancer from './plugins/hot-reload-enhancer.js'
+// import hotReloadEnhancer from './plugins/hot-reload-enhancer.js'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     svelte(),
-    hotReloadEnhancer()
+    // hotReloadEnhancer()
   ],
-  base: '/Run_saraylo_app/',
+  base: './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

@@ -2,55 +2,61 @@
   import { onMount } from 'svelte';
 
   // Props for the component
-  export let size = 200;
-  export let strokeWidth = 20;
-  export let ringColors = ['#41B6E6', '#db3eb1', '#FFFFFF']; // Miami Vice palette: blue, pink, white
-  export let ringBgColors = ['rgba(65, 182, 230, 0.2)', 'rgba(219, 62, 177, 0.2)', 'rgba(255, 255, 255, 0.2)'];
-  export let testDuration = 5000; // ms for test animation (5 seconds)
-  export let showWhenNoData = false;
-  export let hasData = true;
-  
+  const { 
+    size = 200,
+    strokeWidth = 20,
+    ringColors = ['#41B6E6', '#db3eb1', '#FFFFFF'], // Miami Vice palette: blue, pink, white
+    ringBgColors = ['rgba(65, 182, 230, 0.2)', 'rgba(219, 62, 177, 0.2)', 'rgba(255, 255, 255, 0.2)'],
+    testDuration = 5000, // ms for test animation (5 seconds)
+    showWhenNoData = false,
+    hasData = true,
+    progress1: initialProgress1 = 0,
+    progress2: initialProgress2 = 0,
+    progress3: initialProgress3 = 0,
+    steps: initialSteps = 0,
+    stepsGoal = 10000 // Default goal of 10,000 steps
+  } = $props();
+
   // Progress values for each ring (0-150 to demonstrate multi-loop)
-  export let progress1 = 0;
-  export let progress2 = 0;
-  export let progress3 = 0;
+  let progress1 = $state(initialProgress1);
+  let progress2 = $state(initialProgress2);
+  let progress3 = $state(initialProgress3);
   
   // Steps data
-  export let steps = 0;
-  export let stepsGoal = 10000; // Default goal of 10,000 steps
+  let steps = $state(initialSteps);
   
   // Computed values
-  $: radius1 = size / 2 - strokeWidth / 2;
-  $: radius2 = size / 2 - strokeWidth * 1.5;
-  $: radius3 = size / 2 - strokeWidth * 2.5;
+  let radius1 = $derived(size / 2 - strokeWidth / 2);
+  let radius2 = $derived(size / 2 - strokeWidth * 1.5);
+  let radius3 = $derived(size / 2 - strokeWidth * 2.5);
   
-  $: circumference1 = 2 * Math.PI * radius1;
-  $: circumference2 = 2 * Math.PI * radius2;
-  $: circumference3 = 2 * Math.PI * radius3;
+  let circumference1 = $derived(2 * Math.PI * radius1);
+  let circumference2 = $derived(2 * Math.PI * radius2);
+  let circumference3 = $derived(2 * Math.PI * radius3);
   
   // For 270 degrees, we use 3/4 of the full circumference
-  $: arcLength1 = circumference1 * 0.75;
-  $: arcLength2 = circumference2 * 0.75;
-  $: arcLength3 = circumference3 * 0.75;
+  let arcLength1 = $derived(circumference1 * 0.75);
+  let arcLength2 = $derived(circumference2 * 0.75);
+  let arcLength3 = $derived(circumference3 * 0.75);
   
   // Calculate stroke dash array for 270° arc
-  $: strokeDasharray1 = `${arcLength1} ${circumference1}`;
-  $: strokeDasharray2 = `${arcLength2} ${circumference2}`;
-  $: strokeDasharray3 = `${arcLength3} ${circumference3}`;
+  let strokeDasharray1 = $derived(`${arcLength1} ${circumference1}`);
+  let strokeDasharray2 = $derived(`${arcLength2} ${circumference2}`);
+  let strokeDasharray3 = $derived(`${arcLength3} ${circumference3}`);
   
   // Check if there's any progress to display
-  $: hasProgress = progress1 > 0 || progress2 > 0 || progress3 > 0;
+  let hasProgress = $derived(progress1 > 0 || progress2 > 0 || progress3 > 0);
   
   // Should we display the component?
-  $: shouldDisplay = hasData && (hasProgress || showWhenNoData);
+  let shouldDisplay = $derived(hasData && (hasProgress || showWhenNoData));
   
   // Steps progress calculation
-  $: stepsProgress = Math.min(100, (steps / stepsGoal) * 100);
+  let stepsProgress = $derived(Math.min(100, (steps / stepsGoal) * 100));
   
   // Animation state
-  let isAnimating = false;
-  let animationFrame;
-  let startTime;
+  let isAnimating = $state(false);
+  let animationFrame = $state();
+  let startTime = $state();
   
   // Convert angle from degrees to radians
   function toRadians(degrees) {
@@ -82,50 +88,50 @@
   }
   
   // Calculate stroke dash offset for first layer (0-100%)
-  $: firstLayerProgress1 = Math.min(progress1, 100);
-  $: firstLayerProgress2 = Math.min(progress2, 100);
-  $: firstLayerProgress3 = Math.min(progress3, 100);
+  let firstLayerProgress1 = $derived(Math.min(progress1, 100));
+  let firstLayerProgress2 = $derived(Math.min(progress2, 100));
+  let firstLayerProgress3 = $derived(Math.min(progress3, 100));
   
-  $: firstLayerOffset1 = arcLength1 * (1 - firstLayerProgress1 / 100);
-  $: firstLayerOffset2 = arcLength2 * (1 - firstLayerProgress2 / 100);
-  $: firstLayerOffset3 = arcLength3 * (1 - firstLayerProgress3 / 100);
+  let firstLayerOffset1 = $derived(arcLength1 * (1 - firstLayerProgress1 / 100));
+  let firstLayerOffset2 = $derived(arcLength2 * (1 - firstLayerProgress2 / 100));
+  let firstLayerOffset3 = $derived(arcLength3 * (1 - firstLayerProgress3 / 100));
   
   // Calculate stroke dash offset for second layer (100-200%)
-  $: secondLayerProgress1 = Math.max(0, progress1 - 100);
-  $: secondLayerProgress2 = Math.max(0, progress2 - 100);
-  $: secondLayerProgress3 = Math.max(0, progress3 - 100);
+  let secondLayerProgress1 = $derived(Math.max(0, progress1 - 100));
+  let secondLayerProgress2 = $derived(Math.max(0, progress2 - 100));
+  let secondLayerProgress3 = $derived(Math.max(0, progress3 - 100));
   
-  $: secondLayerOffset1 = arcLength1 * (1 - secondLayerProgress1 / 100);
-  $: secondLayerOffset2 = arcLength2 * (1 - secondLayerProgress2 / 100);
-  $: secondLayerOffset3 = arcLength3 * (1 - secondLayerProgress3 / 100);
+  let secondLayerOffset1 = $derived(arcLength1 * (1 - secondLayerProgress1 / 100));
+  let secondLayerOffset2 = $derived(arcLength2 * (1 - secondLayerProgress2 / 100));
+  let secondLayerOffset3 = $derived(arcLength3 * (1 - secondLayerProgress3 / 100));
   
   // Get current colors based on progress
-  $: firstLayerColor1 = ringColors[0];
-  $: firstLayerColor2 = ringColors[1];
-  $: firstLayerColor3 = ringColors[2];
+  let firstLayerColor1 = $derived(ringColors[0]);
+  let firstLayerColor2 = $derived(ringColors[1]);
+  let firstLayerColor3 = $derived(ringColors[2]);
   
-  $: secondLayerColor1 = getProgressColor(ringColors[0], 100); // Darker shade for second layer
-  $: secondLayerColor2 = getProgressColor(ringColors[1], 100);
-  $: secondLayerColor3 = getProgressColor(ringColors[2], 100);
+  let secondLayerColor1 = $derived(getProgressColor(ringColors[0], 100)); // Darker shade for second layer
+  let secondLayerColor2 = $derived(getProgressColor(ringColors[1], 100));
+  let secondLayerColor3 = $derived(getProgressColor(ringColors[2], 100));
   
   // Pre-calculate the points for the SVG paths (225° to 135°)
-  $: startAngle225 = 225;
-  $: endAngle135 = 135;
+  let startAngle225 = $derived(225);
+  let endAngle135 = $derived(135);
   
-  $: startX1 = size/2 + radius1 * Math.sin(toRadians(startAngle225));
-  $: startY1 = size/2 - radius1 * Math.cos(toRadians(startAngle225));
-  $: endX1 = size/2 + radius1 * Math.sin(toRadians(endAngle135));
-  $: endY1 = size/2 - radius1 * Math.cos(toRadians(endAngle135));
+  let startX1 = $derived(size/2 + radius1 * Math.sin(toRadians(startAngle225)));
+  let startY1 = $derived(size/2 - radius1 * Math.cos(toRadians(startAngle225)));
+  let endX1 = $derived(size/2 + radius1 * Math.sin(toRadians(endAngle135)));
+  let endY1 = $derived(size/2 - radius1 * Math.cos(toRadians(endAngle135)));
   
-  $: startX2 = size/2 + radius2 * Math.sin(toRadians(startAngle225));
-  $: startY2 = size/2 - radius2 * Math.cos(toRadians(startAngle225));
-  $: endX2 = size/2 + radius2 * Math.sin(toRadians(endAngle135));
-  $: endY2 = size/2 - radius2 * Math.cos(toRadians(endAngle135));
+  let startX2 = $derived(size/2 + radius2 * Math.sin(toRadians(startAngle225)));
+  let startY2 = $derived(size/2 - radius2 * Math.cos(toRadians(startAngle225)));
+  let endX2 = $derived(size/2 + radius2 * Math.sin(toRadians(endAngle135)));
+  let endY2 = $derived(size/2 - radius2 * Math.cos(toRadians(endAngle135)));
   
-  $: startX3 = size/2 + radius3 * Math.sin(toRadians(startAngle225));
-  $: startY3 = size/2 - radius3 * Math.cos(toRadians(startAngle225));
-  $: endX3 = size/2 + radius3 * Math.sin(toRadians(endAngle135));
-  $: endY3 = size/2 - radius3 * Math.cos(toRadians(endAngle135));
+  let startX3 = $derived(size/2 + radius3 * Math.sin(toRadians(startAngle225)));
+  let startY3 = $derived(size/2 - radius3 * Math.cos(toRadians(startAngle225)));
+  let endX3 = $derived(size/2 + radius3 * Math.sin(toRadians(endAngle135)));
+  let endY3 = $derived(size/2 - radius3 * Math.cos(toRadians(endAngle135)));
   
   // Function to animate the rings to 150% over testDuration
   function animateToTestValues() {
@@ -581,7 +587,7 @@
   
   <button 
     class="test-button" 
-    on:click={toggleAnimation}
+    onclick={toggleAnimation}
     aria-pressed={isAnimating}
   >
     {isAnimating ? 'Сбросить активность' : 'Запустить активность'}

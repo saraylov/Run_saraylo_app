@@ -4,18 +4,21 @@
   import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
   import { navigationContext } from '../lib/viewTransition.js';
 
+  // Props using Svelte 5 runes
+  const { onBack, onSettings, onTraining } = $props();
+
   // Exercise categories
-  let categories = [
+  let categories = $state([
     { id: 'favorites', name: 'Избранные' }, // Moved favorites category to the beginning
     { id: 'running', name: 'Бег' },
     { id: 'treadmill', name: 'Бег на дорожке' },
     { id: 'cycling', name: 'Велосипед' },
     { id: 'walking', name: 'Ходьба' },
     { id: 'nordic_walking', name: 'Скандинавская ходьба' }
-  ];
+  ]);
 
   // Workout programs for each category with duration information
-  let workoutPrograms = {
+  let workoutPrograms = $state({
     running: [
       { id: 'free_run', name: 'Свободная тренировка', duration: 'Без ограничения по времени', description: 'Тренировка без ограничения по времени' },
       { id: 'cardio', name: 'Кардио тренировка', duration: '30 мин', description: 'Интенсивная кардио тренировка' },
@@ -47,7 +50,7 @@
       { id: 'assessment_nordic', name: 'Оценочная тренировка', duration: '20 мин', description: 'Тренировка для оценки текущего уровня' }
     ],
     favorites: [] // Will be populated with favorite workouts
-  };
+  });
 
   // Define segment patterns for different workout types
   const workoutSegments = {
@@ -158,11 +161,11 @@
   };
 
   // Selected category and workout
-  let selectedCategory = 'favorites'; // Set favorites as default selected category
-  let selectedWorkout = null;
+  let selectedCategory = $state('favorites'); // Set favorites as default selected category
+  let selectedWorkout = $state(null);
   
   // Favorites state
-  let favorites = [];
+  let favorites = $state([]);
 
   // Function to select a category
   function selectCategory(categoryId) {
@@ -320,10 +323,6 @@
     }
   });
 
-  // Export functions for parent component
-  export let onBack;
-  export let onSettings;
-  export let onTraining;
 </script>
 
 <Header title="Выбор тренировки" showSettingsButton={true} onSettings={onSettings} onBack={onBack} />

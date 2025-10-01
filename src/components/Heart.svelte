@@ -33,9 +33,8 @@
     healthData.calories = 400 + Math.floor(Math.random() * 100);
   }
 
-  // Export functions for parent component
-  export let onBack;
-  export let onSettings;
+  // Props using Svelte 5 runes
+  const { onBack, onSettings } = $props();
 
   // Update health data periodically
   onMount(() => {
