@@ -99,14 +99,14 @@
 		<div class="tab-item" on:click={onHomeClick}>
 			<div class="tab-icon">
 				<!-- Home icon -->
-				<img src="/icons/home.png" alt="Home" class="image-icon" />
+				<img src="./icons/home.png" alt="Home" class="image-icon" />
 			</div>
 			<span class="tab-label">Статистика</span>
 		</div>
 		<div class="tab-item" on:click={onHealthClick}>
 			<div class="tab-icon">
 				<!-- Health icon -->
-				<img src="/icons/health.png" alt="Health" class="image-icon health-icon" />
+				<img src="./icons/health.png" alt="Health" class="image-icon health-icon" />
 			</div>
 			<span class="tab-label">Здоровье</span>
 		</div>
@@ -139,7 +139,7 @@
 		<div class="central-button" bind:this={centralButtonElement}>
 			<div class="central-tab-icon">
 				<!-- Central icon - play icon for starting training -->
-				<img src="/icons/play.png" alt="Start Training" class="central-image-icon" />
+				<img src="./icons/play.png" alt="Start Training" class="central-image-icon" />
 			</div>
 		</div>
 	</div>
@@ -149,7 +149,7 @@
 		<div class="tab-item" on:click={onDevicesClick}>
 			<div class="tab-icon">
 				<!-- Devices icon -->
-				<img src="/icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
+				<img src="./icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
 			</div>
 			<span class="tab-label">Устройства</span>
 		</div>
@@ -157,7 +157,7 @@
 		<div class="tab-item" on:click={onSettingsClick}>
 			<div class="tab-icon">
 				<!-- Settings icon repurposed for Profile -->
-				<img src="/icons/Profile.png" alt="Profile" class="image-icon profile-icon" />
+				<img src="./icons/Profile.png" alt="Profile" class="image-icon profile-icon" />
 			</div>
 			<span class="tab-label">Профиль</span>
 		</div>
