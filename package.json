@@ -10,13 +10,10 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "gh-pages": "^6.3.0",
-    "svelte": "^5.39.4",
-    "vite": "npm:rolldown-vite@7.1.13"
-  },
-  "overrides": {
-    "vite": "npm:rolldown-vite@7.1.13"
+    "svelte": "^4.2.20",
+    "vite": "^5.0.0"
   },
   "dependencies": {
     "mapbox-gl": "^3.15.0",
