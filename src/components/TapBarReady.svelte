@@ -3,6 +3,9 @@
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
   
+  // Props using Svelte 5 runes
+  let { workoutSelected = false } = $props();
+  
   // Functions to handle each tab click with specific values
   function onHomeClick() {
     dispatch('tabChanged', { tab: 'home' });
@@ -48,7 +51,7 @@
 	</div>
 	
 	<!-- Central cutout button - starts training with 2-second press visualization -->
-	<div class="central-button-container-ready">
+	<div class="central-button-container-ready" class:inactive={!workoutSelected} class:active={workoutSelected}>
 		<!-- Progress circle around central button -->
 		<svg class="central-progress-circle-ready" viewBox="0 0 100 100">
 			<circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>

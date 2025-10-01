@@ -103,6 +103,13 @@
   height: 94px; /* Increased size to accommodate 48px icon */
   z-index: 1001; /* Ensure central button is above TabBar */
   cursor: pointer;
+  transition: all 0.35s ease-out;
+}
+
+/* Inactive state - workout not selected */
+.central-button-container-ready.inactive {
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Progress circle around central button */
@@ -132,6 +139,17 @@
     inset 0 0 10px rgba(0, 0, 0, 0.3),
     0 0 0 2px rgba(255, 255, 255, 0.1);
   z-index: 1;
+  transition: all 0.35s ease-out;
+}
+
+/* Inactive state - workout not selected */
+.central-button-container-ready.inactive .central-button-cutout-ready {
+  opacity: 0.45; /* Уменьшение opacity до 40-50% */
+  box-shadow: 
+    inset 0 0 0 5px rgba(255, 255, 255, 0.1),
+    inset 0 0 15px rgba(0, 0, 0, 0.5), /* Эффект "утопленности" */
+    0 0 0 2px rgba(255, 255, 255, 0.05);
+  transition: all 0.35s ease-out;
 }
 
 /* Central button - slightly smaller than cutout to create gap */
@@ -148,11 +166,34 @@
   justify-content: center;
   z-index: 2;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.35s ease-out;
   box-shadow: 
     0 4px 10px rgba(0, 0, 0, 0.3),
     inset 0 2px 2px rgba(255, 255, 255, 0.3);
   transform-origin: center;
+}
+
+/* Inactive state - workout not selected */
+.central-button-container-ready.inactive .central-button-ready {
+  opacity: 0.45; /* Уменьшение opacity до 40-50% */
+  background: linear-gradient(135deg, #41B6E6, #34C759); /* Same gradient but with reduced opacity */
+  box-shadow: 
+    inset 0 0 10px rgba(0, 0, 0, 0.3), /* Только внутренняя тень для эффекта "утопленности" */
+    0 0 0 rgba(0, 0, 0, 0); /* Убираем внешнюю тень в неактивном состоянии */
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: translateY(0) scale(1); /* Нормальное положение без эффекта нажатия */
+  transition: all 0.35s ease-out;
+}
+
+/* Active state - workout selected */
+.central-button-container-ready.active .central-button-ready {
+  opacity: 1; /* Полная opacity */
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.4), /* Внешняя тень для эффекта "выскакивания" */
+    inset 0 2px 2px rgba(255, 255, 255, 0.4);
+  cursor: pointer; /* Указатель для индикации кликабельности */
+  transform: translateY(0) scale(1); /* Нормальное положение */
 }
 
 .central-button-ready:hover {
@@ -160,6 +201,7 @@
   box-shadow: 
     0 6px 15px rgba(0, 0, 0, 0.4),
     inset 0 2px 2px rgba(255, 255, 255, 0.4);
+  transition: all 0.35s ease-out;
 }
 
 .central-button-ready:active {
@@ -167,6 +209,17 @@
   box-shadow: 
     0 2px 5px rgba(0, 0, 0, 0.2),
     inset 0 2px 2px rgba(255, 255, 255, 0.2);
+  transition: all 0.35s ease-out;
+}
+
+/* Inactive state - remove hover and active effects */
+.central-button-container-ready.inactive .central-button-ready:hover,
+.central-button-container-ready.inactive .central-button-ready:active {
+  transform: none !important;
+  box-shadow: 
+    inset 0 0 10px rgba(0, 0, 0, 0.3) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 /* Specific icon styling to ensure independence */

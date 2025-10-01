@@ -14,6 +14,7 @@
   import History from './components/History.svelte';
   import { showTabBar, hideTabBar } from './lib/tabBarStore.js';
   import TapBarReady from './components/TapBarReady.svelte'; // Импорт нового компонента TapBarReady
+  import { workoutSelected } from './lib/workoutSelectionStore.js'; // Импорт хранилища выбора тренировки
 
   // State for authentication
   let isAuthenticated = $state(true); // Always authenticated
@@ -354,7 +355,7 @@
   {#if currentView !== 'training'}
     {#if currentView === 'exercises'}
       <!-- Используем TapBarReady на странице упражнений -->
-      <TapBarReady on:startTraining={handleGoToTraining} on:tabChanged={handleTabChange} />
+      <TapBarReady workoutSelected={$workoutSelected} on:startTraining={handleGoToTraining} on:tabChanged={handleTabChange} />
     {:else}
       <!-- Use regular TabBar on other pages -->
       <TabBar on:centralButtonClicked={handleCentralButtonClick} on:tabChanged={handleTabChange} />

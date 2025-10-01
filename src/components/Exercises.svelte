@@ -4,6 +4,7 @@
   import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
   import { navigationContext } from '../lib/viewTransition.js';
   import ExercisesTabBar from './ExercisesTabBar.svelte'; // Import the new Exercises TabBar
+  import { setWorkoutSelected } from '../lib/workoutSelectionStore.js'; // Import the workout selection store
 
   // Props using Svelte 5 runes
   const { onBack, onSettings, onTraining } = $props();
@@ -173,6 +174,8 @@
     selectedCategory = categoryId;
     // Reset workout selection when category changes
     selectedWorkout = null;
+    // Update workout selection state
+    setWorkoutSelected(false);
     
     // If selecting favorites category, populate it with favorite workouts
     if (categoryId === 'favorites') {
@@ -183,6 +186,8 @@
   // Function to select a workout
   function selectWorkout(workout) {
     selectedWorkout = workout;
+    // Update workout selection state
+    setWorkoutSelected(true);
   }
 
   // Function to get segments for a workout
