@@ -11,6 +11,7 @@
 	let pressProgress = 0;
 	let isPressing = false;
 	
+	
 	// Function to handle pause/resume button click
 	function onPauseClick() {
 		isPaused = !isPaused;
@@ -66,7 +67,7 @@
 			<div class="tab-item pause-item" on:click={onPauseClick}>
 				<div class="tab-icon">
 					<!-- Pause icon -->
-					<img src="/icons/pause.png" alt="Pause" class="image-icon" />
+					<img src="./icons/pause.png" alt="Pause" class="image-icon" />
 				</div>
 				<span class="tab-label">Пауза</span>
 			</div>
@@ -75,7 +76,7 @@
 			<div class="tab-item resume-item" on:click={onPauseClick}>
 				<div class="tab-icon">
 					<!-- Play icon for resume -->
-					<img src="/icons/play.png" alt="Resume" class="image-icon" />
+					<img src="./icons/play.png" alt="Resume" class="image-icon" />
 				</div>
 				<span class="tab-label">Продолжить</span>
 			</div>
@@ -94,7 +95,7 @@
 			
 			<div class="tab-icon">
 				<!-- Finish icon -->
-				<img src="/icons/stop.png" alt="Finish" class="image-icon" />
+				<img src="./icons/stop.png" alt="Finish" class="image-icon" />
 			</div>
 			<span class="tab-label">Завершить</span>
 		</div>
