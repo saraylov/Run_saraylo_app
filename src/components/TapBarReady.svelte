@@ -120,10 +120,8 @@
 		</svg>
 		<div class="central-button-cutout-ready"></div>
 		<div class="central-button-ready">
-			<div class="central-tab-icon-ready">
-				<!-- Central icon - play icon for starting training -->
-				<img src="/icons/play.png" alt="Start Training" class="central-image-icon-ready" />
-			</div>
+			<!-- Replaced icon with "Ready" text -->
+			<span class="ready-text">Ready</span>
 		</div>
 	</div>
 	
