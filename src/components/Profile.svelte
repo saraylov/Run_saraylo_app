@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import Header from './Header.svelte'; // Import the Header component
   import intensityZoneService from '../lib/intensityZoneService.js'; // Import the Intensity Zone Service
+import personalSpeedZoneService from '../lib/personalSpeedZoneService.js'; // Import the Personal Speed Zone Service
 
   // Props using Svelte 5 runes
   const { user, onBack, onSettings, onHistory } = $props();
@@ -51,6 +52,48 @@
     }
   ]);
   
+  // Workout history data
+  let workoutHistory = $state([]);
+  
+  // Personal speed zones data
+  let personalSpeedZones = $state(null);
+  
+  // Function to load workout history from localStorage
+  function loadWorkoutHistory() {
+    try {
+      const history = localStorage.getItem('workoutHistory');
+      if (history) {
+        workoutHistory = JSON.parse(history);
+        // Sort by date descending (newest first)
+        workoutHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+      }
+    } catch (error) {
+      console.error('Error loading workout history:', error);
+      workoutHistory = [];
+    }
+  }
+  
+  // Format date for display
+  function formatHistoryDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+  
+  // Format time for display
+  function formatTime(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    
+    if (hrs > 0) {
+      return `${hrs}ч ${mins}мин`;
+    }
+    return `${mins} мин`;
+  }
+  
   // Function to format numbers with thousands separators
   function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -63,6 +106,25 @@
     const diffTime = Math.abs(today.getTime() - joinDate.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
+  
+  // Load personal speed zones from localStorage
+  function loadPersonalSpeedZones() {
+    try {
+      const zonesData = personalSpeedZoneService.getPersonalSpeedZones();
+      if (zonesData) {
+        personalSpeedZones = zonesData;
+      }
+    } catch (error) {
+      console.error('Error loading personal speed zones:', error);
+      personalSpeedZones = null;
+    }
+  }
+  
+  // Load workout history when component mounts
+  onMount(() => {
+    loadWorkoutHistory();
+    loadPersonalSpeedZones();
+  });
 </script>
 
 <Header title="Профиль" showSettingsButton={true} showHistoryButton={true} onSettings={onSettings} onHistory={onHistory} />
@@ -95,6 +157,29 @@
       </div>
     </div>
     
+    <!-- Personal Speed Zones Section -->
+    <div class="personal-speed-zones-section">
+      <h3 class="panel-title">Мои скоростные зоны</h3>
+      {#if personalSpeedZones && personalSpeedZones.zones}
+        <div class="color-panels-container">
+          {#each Object.entries(personalSpeedZones.zones) as [zoneKey, zone]}
+            <div class="color-panel" style="background-color: {zone.color};" title="{zone.name}: {zone.averageSpeed.toFixed(1)} км/ч">
+              <div class="panel-content">
+                <div class="zone-name">{zone.name}</div>
+                <div class="segment-speed">{zone.averageSpeed.toFixed(1)} км/ч</div>
+                <div class="effort-range">{zone.effortRange}</div>
+                <div class="calibration-date">{formatHistoryDate(personalSpeedZones.calibrationDate)}</div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="no-zones-message">
+          <p>Пройдите оценочную тренировку для калибровки скоростных зон</p>
+        </div>
+      {/if}
+    </div>
+    
     <!-- Assessment Results Section -->
     <div class="assessment-results-section">
       <h3 class="panel-title">Последние результаты оценочной тренировки</h3>
@@ -116,6 +201,41 @@
       {/if}
     </div>
     
+  </div>
+  
+  <!-- Workout History Section -->
+  <div class="glass-panel workout-history-panel">
+    <h3 class="panel-title">История тренировок</h3>
+    {#if workoutHistory && workoutHistory.length > 0}
+      <div class="workout-history-list">
+        {#each workoutHistory as workout, i}
+          <div class="workout-history-item">
+            <div class="workout-header">
+              <div class="workout-date">{formatHistoryDate(workout.date)}</div>
+              <div class="workout-type">{workout.type}</div>
+            </div>
+            <div class="workout-stats">
+              <div class="stat">
+                <div class="stat-value">{formatTime(workout.duration)}</div>
+                <div class="stat-label">Время</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">{workout.distance?.toFixed(2) || 0} км</div>
+                <div class="stat-label">Дистанция</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">{workout.calories || 0}</div>
+                <div class="stat-label">Калории</div>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    {:else}
+      <div class="no-history-message">
+        <p>У вас пока нет завершенных тренировок</p>
+      </div>
+    {/if}
   </div>
   
   <!-- Settings Button -->
@@ -236,6 +356,7 @@
     color: rgba(255, 255, 255, 0.7);
   }
   
+  .personal-speed-zones-section,
   .assessment-results-section {
     display: flex;
     flex-direction: column;
@@ -283,12 +404,109 @@
     font-size: 0.7rem;
   }
   
+  .zone-name {
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  
   .segment-speed {
     font-size: 0.6rem;
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   }
   
+  .effort-range {
+    font-size: 0.5rem;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  .calibration-date {
+    font-size: 0.5rem;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  
   .no-assessment-message {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1rem;
+  }
+  
+  /* Workout History Panel */
+  .workout-history-panel {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 0.125rem solid rgba(255, 255, 255, 0.25);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 
+      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
+      inset 0 0 2rem rgba(255, 255, 255, 0.2),
+      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
+      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 15;
+    overflow: hidden;
+  }
+  
+  .workout-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .workout-history-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    backdrop-filter: blur(0.3125rem);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .workout-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .workout-date {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .workout-type {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+  }
+  
+  .workout-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .no-history-message {
     text-align: center;
     color: rgba(255, 255, 255, 0.7);
     padding: 1rem;
@@ -314,6 +532,14 @@
     margin-top: 0.5rem;
     position: relative;
     z-index: 5;
+  }
+  
+  .settings-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-0.125rem);
+    box-shadow: 
+      0 0.5rem 1rem rgba(0, 0, 0, 0.2),
+      inset 0 0.0625rem 0.1875rem rgba(255, 255, 255, 0.3);
   }
   
   /* Responsive design */
@@ -353,6 +579,10 @@
     
     .color-panels-container {
       grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .workout-stats {
+      grid-template-columns: 1fr;
     }
   }
   
@@ -401,6 +631,10 @@
     
     .color-panel {
       height: 50px;
+    }
+    
+    .workout-stats {
+      grid-template-columns: 1fr;
     }
   }
 </style>

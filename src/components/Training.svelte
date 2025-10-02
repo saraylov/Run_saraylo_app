@@ -7,6 +7,7 @@
   import mapboxgl from 'mapbox-gl';
   import { hideTabBar, showTabBar } from '../lib/tabBarStore.js'; // Import TabBar control functions
   import intensityZoneService from '../lib/intensityZoneService.js'; // Import Intensity Zone Service
+import personalSpeedZoneService from '../lib/personalSpeedZoneService.js'; // Import Personal Speed Zone Service
   import TrainingTabBar from './TrainingTabBar.svelte'; // Import the new Training TabBar
   import ActiveTrainingTabBar from './ActiveTrainingTabBar.svelte'; // Import the Active Training TabBar
   import { workoutSelected, resetWorkoutSelection } from '../lib/workoutSelectionStore.js'; // Import workout selection store and reset function
@@ -715,14 +716,28 @@
     
     // Check if this was an assessment training
     const workoutId = getWorkoutId();
-    const isAssessment = workoutId && workoutId.startsWith('assessment');
+    const isAssessment = personalSpeedZoneService.isAssessmentWorkout(workoutId);
     
-    // If this was an assessment training, calculate and save intensity zones
+    // If this was an assessment training, calculate and save personal speed zones
     if (isAssessment) {
       try {
-        // For demonstration, we'll use fixed speeds for each segment
-        // In a real implementation, these would be calculated from actual training data
-        const segmentSpeeds = [8.5, 10.2, 12.8, 14.5, 16.2]; // km/h for each segment
+        // Calculate personal speed zones based on actual training data
+        const zonesData = personalSpeedZoneService.calculatePersonalSpeedZones(finalWorkoutData.segments);
+        
+        // Save the calculated personal speed zones
+        personalSpeedZoneService.savePersonalSpeedZones(zonesData);
+        
+        console.log('Персональные скоростные зоны успешно рассчитаны и сохранены:', zonesData);
+      } catch (error) {
+        console.error('Ошибка при расчете персональных скоростных зон:', error);
+      }
+    }
+    
+    // Also calculate and save intensity zones for backward compatibility
+    if (isAssessment) {
+      try {
+        // Extract average speeds for intensity zone calculation
+        const segmentSpeeds = finalWorkoutData.segments.map(segment => segment.avgSpeed || 0);
         
         // Calculate intensity zones based on segment speeds
         const zonesData = intensityZoneService.calculateIntensityZones(segmentSpeeds);
