@@ -1000,6 +1000,7 @@
     {training}
     {getWorkoutSegments}
     {getWorkoutId}
+    currentTime={elapsedTime / 1000}
   />
   
   <TrainingMapPanel 

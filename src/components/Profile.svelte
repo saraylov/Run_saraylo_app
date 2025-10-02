@@ -3,7 +3,6 @@
   import ProfileHeader from './Profile/ProfileHeader.svelte';
   import UserInfoSection from './Profile/UserInfoSection.svelte';
   import AssessmentResultsSection from './Profile/AssessmentResultsSection.svelte';
-  import WorkoutHistorySection from './Profile/WorkoutHistorySection.svelte';
   import SettingsButton from './Profile/SettingsButton.svelte';
   import intensityZoneService from '../lib/intensityZoneService.js';
   import personalSpeedZoneService from '../lib/personalSpeedZoneService.js';
@@ -57,28 +56,6 @@
     }
   ]);
   
-  // Workout history data
-  let workoutHistory = $state([]);
-  
-  // Function to load workout history from localStorage
-  function loadWorkoutHistory() {
-    try {
-      const history = localStorage.getItem('workoutHistory');
-      if (history) {
-        workoutHistory = JSON.parse(history);
-        // Sort by date descending (newest first)
-        workoutHistory.sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateB.getTime() - dateA.getTime();
-        });
-      }
-    } catch (error) {
-      console.error('Error loading workout history:', error);
-      workoutHistory = [];
-    }
-  }
-  
   // Function to calculate days since join
   function daysSinceJoin() {
     const joinDate = new Date(user.join_date);
@@ -89,7 +66,7 @@
   
   // Load workout history when component mounts
   onMount(() => {
-    loadWorkoutHistory();
+    // Empty function since we removed workout history functionality
   });
 </script>
 
@@ -108,8 +85,6 @@
     
     <AssessmentResultsSection {assessmentResults} />
   </div>
-  
-  <WorkoutHistorySection {workoutHistory} />
   
   <SettingsButton {onSettings} />
 </div>

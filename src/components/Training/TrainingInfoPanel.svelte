@@ -2,7 +2,7 @@
   import WorkoutTimeline from '../WorkoutTimeline.svelte';
   
   // Props using Svelte 5 runes
-  const { training, getWorkoutSegments, getWorkoutId } = $props();
+  const { training, getWorkoutSegments, getWorkoutId, currentTime = 0 } = $props();
 </script>
 
 <!-- Workout Info and Timeline Panel for all workouts -->
@@ -18,7 +18,7 @@
   
   <!-- Workout Timeline Visualization for all workouts -->
   <div class="timeline-section training-timeline-section">
-    <WorkoutTimeline segments={getWorkoutSegments(getWorkoutId())} />
+    <WorkoutTimeline segments={getWorkoutSegments(getWorkoutId())} currentTime={currentTime} />
   </div>
 </div>
 
