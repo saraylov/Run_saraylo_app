@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import ProfileHeader from './Profile/ProfileHeader.svelte';
   import UserInfoSection from './Profile/UserInfoSection.svelte';
-  import PersonalSpeedZonesSection from './Profile/PersonalSpeedZonesSection.svelte';
   import AssessmentResultsSection from './Profile/AssessmentResultsSection.svelte';
   import WorkoutHistorySection from './Profile/WorkoutHistorySection.svelte';
   import SettingsButton from './Profile/SettingsButton.svelte';
@@ -61,9 +60,6 @@
   // Workout history data
   let workoutHistory = $state([]);
   
-  // Personal speed zones data
-  let personalSpeedZones = $state(null);
-
   // Function to load workout history from localStorage
   function loadWorkoutHistory() {
     try {
@@ -91,23 +87,9 @@
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
   
-  // Load personal speed zones from localStorage
-  function loadPersonalSpeedZones() {
-    try {
-      const zonesData = personalSpeedZoneService.getPersonalSpeedZones();
-      if (zonesData) {
-        personalSpeedZones = zonesData;
-      }
-    } catch (error) {
-      console.error('Error loading personal speed zones:', error);
-      personalSpeedZones = null;
-    }
-  }
-  
   // Load workout history when component mounts
   onMount(() => {
     loadWorkoutHistory();
-    loadPersonalSpeedZones();
   });
 </script>
 
@@ -123,8 +105,6 @@
   <!-- Combined User Info, Intensity Zones, and Assessment Results Section -->
   <div class="glass-panel user-info-intensity-assessment-panel">
     <UserInfoSection {user} {daysSinceJoin} />
-    
-    <PersonalSpeedZonesSection {personalSpeedZones} />
     
     <AssessmentResultsSection {assessmentResults} />
   </div>

@@ -2,13 +2,15 @@
   import { onMount } from 'svelte';
   import mapboxgl from 'mapbox-gl';
   
+  // Mapbox access token
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia29tbXVuMTV0IiwiYSI6ImNtZmk1ZzlsNTBoejAybHF3ejR6bjEwZ3oifQ.GHO6tJYDnc03P7fxUshk8A';
+
   // Props using Svelte 5 runes
   let { 
     trainingStarted, 
     trainingPaused, 
     trainingStats,
-    mapContainer = $bindable(),
-    initializeMap
+    mapContainer = $bindable()
   } = $props();
   
   // Map variables
@@ -24,6 +26,108 @@
       initializeMap();
     }
   });
+  
+  // Initialize the Mapbox map
+  function initializeMap() {
+    if (!mapContainer) return;
+    
+    // If map already exists, remove it first
+    if (map) {
+      map.remove();
+    }
+    
+    map = new mapboxgl.Map({
+      container: mapContainer,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [30.5234, 50.4501], // Default to Kyiv coordinates
+      zoom: 14
+    });
+
+    // Add navigation controls
+    const nav = new mapboxgl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+    });
+    map.addControl(nav, 'top-right');
+
+    // Add geolocate control
+    geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+    map.addControl(geolocateControl, 'top-left');
+
+    // Wait for map to load before adding event listeners
+    map.on('load', () => {
+      // Set up event listeners for geolocation
+      geolocateControl.on('geolocate', (position) => {
+        const { longitude, latitude } = position.coords;
+        const newCoordinate = [longitude, latitude];
+        
+        // Add new coordinate to route only if training is active
+        if (trainingStarted && !trainingPaused) {
+          routeCoordinates.push(newCoordinate);
+          
+          // Update or create route source
+          if (map.getSource(routeSourceId)) {
+            map.getSource(routeSourceId).setData({
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates
+              }
+            });
+          } else {
+            // Create route source and layer
+            map.addSource(routeSourceId, {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: routeCoordinates
+                }
+              }
+            });
+            
+            map.addLayer({
+              id: routeLayerId,
+              type: 'line',
+              source: routeSourceId,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': '#db3eb1', // Miami Pink
+                'line-width': 5,
+                'line-opacity': 0.75
+              }
+            });
+          }
+          
+          // Smoothly move the map to follow the user
+          map.easeTo({
+            center: newCoordinate,
+            zoom: 16,
+            duration: 1000 // Smooth transition over 1 second
+          });
+        }
+      });
+
+      // Handle errors in geolocation
+      geolocateControl.on('error', (error) => {
+        console.error('Geolocation error:', error);
+        alert('Не удалось получить ваше местоположение. Пожалуйста, проверьте настройки браузера.');
+      });
+    });
+  }
 </script>
 
 <!-- Map Panel with Controls at Bottom -->
