@@ -1,0 +1,35 @@
+/* History.css - Main container styles */
+.history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.25rem 0;
+  margin-top: 80px; /* Space for fixed header */
+}
+
+/* Z-index layering for proper element stacking */
+.history-container > :nth-child(1) { z-index: 10; } /* ProgressVisualization */
+.history-container > :nth-child(2) { z-index: 20; } /* HistoryFilters */
+.history-container > :nth-child(3) { z-index: 30; } /* WorkoutHistoryList */
+
+.segments-section {
+  margin-top: 1.5rem;
+}
+
+.workout-segments-section {
+  margin-bottom: 1.5rem;
+  z-index: 2003;
+}
+
+.workout-segments-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  background: linear-gradient(90deg, #F9A01B, #00BFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

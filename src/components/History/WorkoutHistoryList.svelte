@@ -9,7 +9,8 @@
     comparisonMode, 
     selectedWorkouts, 
     toggleWorkoutSelection, 
-    showWorkoutDetail 
+    showWorkoutDetail,
+    deleteWorkout
   } = $props();
 </script>
 
@@ -64,6 +65,27 @@
                 <span class="checkmark">✓</span>
               {/if}
             </div>
+          {:else}
+            <button 
+              class="delete-button"
+              on:click={(e) => {
+                e.stopPropagation();
+                console.log('Delete button clicked for workout:', workout.id);
+                if (deleteWorkout && typeof deleteWorkout === 'function') {
+                  deleteWorkout(workout);
+                } else {
+                  console.error('deleteWorkout function is not available');
+                }
+              }}
+              aria-label="Удалить тренировку"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6H5H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 11V17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 11V17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           {/if}
         </div>
       {/each}
@@ -71,123 +93,6 @@
   {/if}
 </div>
 
-<style>
-  .history-list {
-    min-height: 300px;
-  }
-  
-  .section-title {
-    margin: 0 0 1.25rem 0;
-    font-size: 1.3rem;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-  }
-  
-  .no-history {
-    text-align: center;
-    padding: 2rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .no-history p {
-    margin: 0.5rem 0;
-  }
-  
-  .workouts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .workout-item {
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .workout-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-  }
-  
-  .workout-item.selectable {
-    cursor: pointer;
-  }
-  
-  .workout-item.selected {
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-  
-  .workout-summary {
-    flex: 1;
-  }
-  
-  .workout-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  
-  .workout-title {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  
-  .workout-date {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .workout-metrics {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  
-  .metric {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .metric-label {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .metric-value {
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-  
-  .selection-indicator {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .workout-item.selected .selection-indicator {
-    border-color: white;
-    background: white;
-  }
-  
-  .checkmark {
-    color: #db3eb1;
-    font-weight: bold;
-  }
+<style global>
+  @import './WorkoutHistoryList.css';
 </style>

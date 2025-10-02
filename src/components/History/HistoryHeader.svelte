@@ -7,5 +7,6 @@
 
 <Header title={title} showBackButton={showBackButton} onBack={onBack} onSettings={onSettings} />
 
-<style>
+<style global>
+  @import './HistoryHeader.css';
 </style>

@@ -1,0 +1,90 @@
+/* WorkoutDetail.css - Z-index: 100 */
+.detail-view {
+  position: relative;
+  z-index: 100;
+  min-height: 300px;
+  padding: 1rem;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 0.125rem solid rgba(255, 255, 255, 0.25);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 
+    0 0.75rem 3rem rgba(0, 0, 0, 0.3),
+    inset 0 0 2rem rgba(255, 255, 255, 0.2),
+    inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
+    inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-title {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.3rem;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.subsection-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-date {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  backdrop-filter: blur(0.3125rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-card .metric-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.25rem;
+}
+
+.metric-card .metric-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.timeline-section {
+  margin-top: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 48rem) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

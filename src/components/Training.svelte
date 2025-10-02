@@ -653,7 +653,6 @@
     
     // Phase 2: Prepare final workout data
     const totalSeconds = Math.floor(elapsedTime / 1000);
-    const isLongEnough = totalSeconds > 600; // 10 minutes = 600 seconds
     
     // Store final data before any resets
     finalWorkoutData = {
@@ -666,7 +665,6 @@
       calories: trainingStats.calories,
       steps: trainingStats.steps,
       duration: totalSeconds,
-      isLongEnough: isLongEnough,
       segments: segmentsWithAvgSpeeds // Include segments with average speeds
     };
     
@@ -680,13 +678,8 @@
   function confirmAndSaveWorkout() {
     if (!finalWorkoutData) return;
     
-    // Check if workout duration exceeds 10 minutes (600 seconds)
-    const isLongEnough = finalWorkoutData.isLongEnough;
-    
-    // Save workout to history if it's long enough
-    if (isLongEnough) {
-      saveWorkoutToHistory();
-    }
+    // Save workout to history (no duration restriction)
+    saveWorkoutToHistory();
     
     // Check if this was an assessment training
     const workoutId = getWorkoutId();
@@ -804,6 +797,14 @@
         maxSpeed: parseFloat(finalWorkoutData.maxSpeed) || 0, // km/h
         calories: parseInt(finalWorkoutData.calories) || 0,
         steps: parseInt(finalWorkoutData.steps.replace(/\s/g, '')) || 0, // Remove spaces from formatted number
+        pace: finalWorkoutData.pace || '0:00 /км', // Add pace with default
+        elevationGain: 0, // Default value
+        elevationLoss: 0, // Default value
+        heartRate: {
+          avg: 0,
+          max: 0,
+          min: 0
+        },
         segments: finalWorkoutData.segments // Segments with average speeds
       };
       

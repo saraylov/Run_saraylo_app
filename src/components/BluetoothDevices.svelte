@@ -108,6 +108,56 @@
     }, 1500);
   }
 
+  // Function to extract brand name from device name
+  function getBrandName(deviceName) {
+    const brands = [
+      { name: 'Samsung', pattern: /^Samsung\s+/ },
+      { name: 'Xiaomi', pattern: /^Xiaomi\s+/ },
+      { name: 'Apple', pattern: /^Apple\s+/ },
+      { name: 'Fitbit', pattern: /^Fitbit\s+/ },
+      { name: 'Garmin', pattern: /^Garmin\s+/ }
+    ];
+    
+    for (const brand of brands) {
+      if (brand.pattern.test(deviceName)) {
+        return brand.name;
+      }
+    }
+    return null;
+  }
+
+  // Function to get brand logo path
+  function getBrandLogo(brandName) {
+    const brandLogos = {
+      'Samsung': '/brand-logos/samsung.svg',
+      'Xiaomi': '/brand-logos/xiaomi.svg',
+      'Apple': '/brand-logos/apple.svg',
+      'Fitbit': '/brand-logos/fitbit.svg',
+      'Garmin': '/brand-logos/garmin.svg'
+    };
+    return brandLogos[brandName] || null;
+  }
+
+  // Function to get model name (without brand)
+  function getModelName(deviceName) {
+    const brand = getBrandName(deviceName);
+    if (brand) {
+      const brands = [
+        { name: 'Samsung', pattern: /^Samsung\s+/ },
+        { name: 'Xiaomi', pattern: /^Xiaomi\s+/ },
+        { name: 'Apple', pattern: /^Apple\s+/ },
+        { name: 'Fitbit', pattern: /^Fitbit\s+/ },
+        { name: 'Garmin', pattern: /^Garmin\s+/ }
+      ];
+      
+      const brandPattern = brands.find(b => b.name === brand)?.pattern;
+      if (brandPattern) {
+        return deviceName.replace(brandPattern, '');
+      }
+    }
+    return deviceName;
+  }
+
   // Props using Svelte 5 runes
   const { onBack, onSettings } = $props();
 </script>
@@ -125,7 +175,14 @@
             <img src={device.icon} alt={getDeviceTypeLabel(device.type)} />
           </div>
           <div class="device-info">
-            <h3 class="device-name">{device.name}</h3>
+            <h3 class="device-name">
+              {#if getBrandName(device.name)}
+                <img src={getBrandLogo(getBrandName(device.name))} alt={getBrandName(device.name)} class="brand-logo" />
+                {getModelName(device.name)}
+              {:else}
+                {device.name}
+              {/if}
+            </h3>
             <p class="device-type">{getDeviceTypeLabel(device.type)}</p>
             <div class="device-status">
               <span class="status-indicator connected"></span>
@@ -169,7 +226,14 @@
             <img src={device.icon} alt={getDeviceTypeLabel(device.type)} />
           </div>
           <div class="device-info">
-            <h3 class="device-name">{device.name}</h3>
+            <h3 class="device-name">
+              {#if getBrandName(device.name)}
+                <img src={getBrandLogo(getBrandName(device.name))} alt={getBrandName(device.name)} class="brand-logo" />
+                {getModelName(device.name)}
+              {:else}
+                {device.name}
+              {/if}
+            </h3>
             <p class="device-type">{getDeviceTypeLabel(device.type)}</p>
             <div class="device-status">
               <span class="status-indicator disconnected"></span>
@@ -481,5 +545,13 @@
       padding: 0.8rem;
       font-size: 0.9rem;
     }
+  }
+
+  .brand-logo {
+    height: 1.2em;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 0.5em;
+    border-radius: 4px;
   }
 </style>
