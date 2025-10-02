@@ -60,50 +60,50 @@
 </script>
 
 <!-- Active Training TabBar with Pause/Resume and Finish buttons -->
-<div class="tab-bar">
-	<div class="tab-group left">
+<div class="tab-bar active-training-tab-bar">
+	<div class="tab-group left active-training-tab-group-left">
 		{#if !isPaused}
 			<!-- Pause button -->
-			<div class="tab-item pause-item" on:click={onPauseClick}>
-				<div class="tab-icon">
+			<div class="tab-item pause-item active-training-pause-item" on:click={onPauseClick}>
+				<div class="tab-icon active-training-tab-icon">
 					<!-- Pause icon -->
-					<img src="/icons/pause.png" alt="Pause" class="image-icon" />
+					<img src="/icons/pause.png" alt="Pause" class="image-icon active-training-image-icon" />
 				</div>
-				<span class="tab-label">Пауза</span>
+				<span class="tab-label active-training-tab-label">Пауза</span>
 			</div>
 		{:else}
 			<!-- Resume button -->
-			<div class="tab-item resume-item" on:click={onPauseClick}>
-				<div class="tab-icon">
+			<div class="tab-item resume-item active-training-resume-item" on:click={onPauseClick}>
+				<div class="tab-icon active-training-tab-icon">
 					<!-- Play icon for resume -->
-					<img src="/icons/play.png" alt="Resume" class="image-icon" />
+					<img src="/icons/play.png" alt="Resume" class="image-icon active-training-image-icon" />
 				</div>
-				<span class="tab-label">Продолжить</span>
+				<span class="tab-label active-training-tab-label">Продолжить</span>
 			</div>
 		{/if}
 	</div>
 	
-	<div class="tab-group right">
-		<div class="tab-item finish-item" 
+	<div class="tab-group right active-training-tab-group-right">
+		<div class="tab-item finish-item active-training-finish-item" 
 		     on:mousedown={handleFinishPressStart}
 		     on:mouseup={handleFinishPressEnd}
 		     on:mouseleave={handleFinishPressEnd}
 		     on:touchstart|preventDefault={handleFinishPressStart}
 		     on:touchend={handleFinishPressEnd}>
 			<!-- Progress bar overlay -->
-			<div class="progress-overlay" style="clip-path: inset(0 {100 - pressProgress * 100}% 0 0);"></div>
+			<div class="progress-overlay active-training-progress-overlay" style="clip-path: inset(0 {100 - pressProgress * 100}% 0 0);"></div>
 			
-			<div class="tab-icon">
+			<div class="tab-icon active-training-tab-icon">
 				<!-- Finish icon -->
-				<img src="/icons/stop.png" alt="Finish" class="image-icon" />
+				<img src="/icons/stop.png" alt="Finish" class="image-icon active-training-image-icon" />
 			</div>
-			<span class="tab-label">Завершить</span>
+			<span class="tab-label active-training-tab-label">Завершить</span>
 		</div>
 	</div>
 </div>
 
 <style>
-	.tab-bar {
+	.active-training-tab-bar {
 		position: fixed;
 		bottom: 2rem; /* Поднять от нижнего края экрана */
 		left: 50%; /* Центрировать горизонтально */
@@ -128,22 +128,26 @@
 		padding: 5px 20px;
 	}
 	
-	.tab-group {
+	.active-training-tab-group-left,
+	.active-training-tab-group-right {
 		display: flex;
 		flex: 1;
 		justify-content: space-around;
+		z-index: 1001;
 	}
 	
-	.tab-group.left {
+	.active-training-tab-group-left {
 		margin-right: 47px; /* Half of increased central button width */
 	}
 	
-	.tab-group.right {
+	.active-training-tab-group-right {
 		margin-left: 47px; /* Half of increased central button width */
 	}
 	
 	/* Adjust tab items to make space for central button */
-	.tab-item {
+	.active-training-pause-item,
+	.active-training-resume-item,
+	.active-training-finish-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -156,27 +160,30 @@
 		min-width: 50px;
 		position: relative; /* Needed for progress overlay */
 		overflow: hidden; /* Contain the progress overlay */
+		z-index: 1002;
 	}
 	
-	.tab-item:hover {
+	.active-training-pause-item:hover,
+	.active-training-resume-item:hover,
+	.active-training-finish-item:hover {
 		color: white;
 		transform: translateY(-2px);
 	}
 	
 	/* Progress overlay for long press visualization */
-	.progress-overlay {
+	.active-training-progress-overlay {
 		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
 		background: rgba(255, 255, 255, 0.2); /* Subtle progress indicator */
-		z-index: -1; /* Behind the content */
+		z-index: 1001; /* Behind the content */
 		transition: clip-path 0.05s linear;
 	}
 	
 	/* Special styling for pause button with more vibrant yellowish glass tint */
-	.pause-item {
+	.active-training-pause-item {
 		background: rgba(249, 160, 27, 0.35); /* Even more vibrant Miami Heat yellow with higher opacity */
 		border-radius: 1rem;
 		padding: 0 0.5rem;
@@ -192,7 +199,7 @@
 	}
 	
 	/* Special styling for resume button with more vibrant greenish glass tint */
-	.resume-item {
+	.active-training-resume-item {
 		background: rgba(52, 199, 89, 0.35); /* Even more vibrant green with higher opacity */
 		border-radius: 1rem;
 		padding: 0 0.5rem;
@@ -208,7 +215,7 @@
 	}
 	
 	/* Special styling for finish button with more vibrant reddish glass tint */
-	.finish-item {
+	.active-training-finish-item {
 		background: rgba(152, 0, 46, 0.35); /* Even more vibrant Miami Heat red with higher opacity */
 		border-radius: 1rem;
 		padding: 0 0.5rem;
@@ -225,33 +232,26 @@
 		overflow: hidden;
 	}
 	
-	.tab-icon {
+	.active-training-tab-icon {
 		width: 24px;
 		height: 24px;
 		margin-bottom: 2px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 1; /* Above the progress overlay */
+		z-index: 1003; /* Above the progress overlay */
 	}
 	
-	.tab-label {
+	.active-training-tab-label {
 		font-size: 12px;
 		font-weight: 500;
-		z-index: 1; /* Above the progress overlay */
+		z-index: 1003; /* Above the progress overlay */
 	}
 	
-	.image-icon {
+	.active-training-image-icon {
 		width: 24px;
 		height: 24px;
 		object-fit: contain;
-		z-index: 1; /* Above the progress overlay */
-	}
-	
-	/* Specific icon styling */
-	.image-icon {
-		width: 24px;
-		height: 24px;
-		object-fit: contain;
+		z-index: 1003; /* Above the progress overlay */
 	}
 </style>

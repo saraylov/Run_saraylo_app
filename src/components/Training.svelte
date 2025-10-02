@@ -1,16 +1,17 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { createEventDispatcher } from 'svelte'; // Import createEventDispatcher
-  import Header from './Header.svelte';
-  import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
-  import WorkoutSummaryModal from './WorkoutSummaryModal.svelte'; // Import the new modal component
+  import { createEventDispatcher } from 'svelte';
+  import TrainingHeader from './Training/TrainingHeader.svelte';
+  import TrainingInfoPanel from './Training/TrainingInfoPanel.svelte';
+  import TrainingMapPanel from './Training/TrainingMapPanel.svelte';
+  import TrainingControls from './Training/TrainingControls.svelte';
+  import TrainingTabBarSection from './Training/TrainingTabBarSection.svelte';
+  import WorkoutSummary from './Training/WorkoutSummary.svelte';
   import mapboxgl from 'mapbox-gl';
-  import { hideTabBar, showTabBar } from '../lib/tabBarStore.js'; // Import TabBar control functions
-  import intensityZoneService from '../lib/intensityZoneService.js'; // Import Intensity Zone Service
-import personalSpeedZoneService from '../lib/personalSpeedZoneService.js'; // Import Personal Speed Zone Service
-  import TrainingTabBar from './TrainingTabBar.svelte'; // Import the new Training TabBar
-  import ActiveTrainingTabBar from './ActiveTrainingTabBar.svelte'; // Import the Active Training TabBar
-  import { workoutSelected, resetWorkoutSelection } from '../lib/workoutSelectionStore.js'; // Import workout selection store and reset function
+  import { hideTabBar, showTabBar } from '../lib/tabBarStore.js';
+  import intensityZoneService from '../lib/intensityZoneService.js';
+  import personalSpeedZoneService from '../lib/personalSpeedZoneService.js';
+  import { workoutSelected, resetWorkoutSelection } from '../lib/workoutSelectionStore.js';
 
   // Create event dispatcher for communicating with parent components
   const dispatch = createEventDispatcher();
@@ -1124,545 +1125,67 @@ import personalSpeedZoneService from '../lib/personalSpeedZoneService.js'; // Im
   });
 </script>
 
-<Header title="Тренировка" showSettingsButton={false} onSettings={onSettings} onBack={onBack} />
+<TrainingHeader 
+  title="Тренировка" 
+  showSettingsButton={false} 
+  onSettings={onSettings} 
+  onBack={onBack} 
+/>
 
-<div class="training-container">
-  <!-- Workout Info and Timeline Panel for all workouts -->
-  <div class="glass-panel workout-info-timeline">
-    <div class="workout-header">
-      <h2 class="workout-title">{training.name}</h2>
-      {#if training.duration > 0}
-        <div class="workout-duration">{training.duration} мин</div>
-      {:else}
-        <div class="workout-duration">Без ограничения по времени</div>
-      {/if}
-    </div>
-    
-    <!-- Workout Timeline Visualization for all workouts -->
-  </div>
+<div class="training-container training-main-container">
+  <TrainingInfoPanel 
+    {training}
+    {getWorkoutSegments}
+    {getWorkoutId}
+  />
   
-  <!-- Map Panel with Controls at Bottom -->
-  <div class="glass-panel map-panel">
-    <!-- Moved timeline section to this panel as requested -->
-    <div class="timeline-section">
-      <WorkoutTimeline segments={getWorkoutSegments(getWorkoutId())} currentTime={elapsedTime / 1000} />
-    </div>
-    
-    <!-- Training Stats Grid -->
-    <div class="training-stats-grid">
-      <div class="stat-item">
-        <div class="stat-label">Время</div>
-        <div class="stat-value">{trainingStats.time}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Расстояние</div>
-        <div class="stat-value">{trainingStats.distance}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Скорость</div>
-        <div class="stat-value">{trainingStats.speed}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Ср.Скорость</div>
-        <div class="stat-value">{trainingStats.avgSpeed}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Макс.Ск</div>
-        <div class="stat-value">{trainingStats.maxSpeed}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Темп</div>
-        <div class="stat-value">{trainingStats.pace}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Калл</div>
-        <div class="stat-value">{trainingStats.calories}</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Шаги</div>
-        <div class="stat-value">{trainingStats.steps}</div>
-      </div>
-    </div>
-    
-    <div class="map-container" bind:this={mapContainer}></div>
-  </div>
-
-  <!-- Training TabBar - show regular tab bar when not training, active tab bar when training -->
-  {#if !trainingStarted}
-    <TrainingTabBar on:startTraining={handleStartTraining} on:tabChanged={handleTabChange} />
-  {:else}
-    <ActiveTrainingTabBar on:pauseTraining={handlePauseTraining} on:finishTraining={handleFinishTraining} />
-  {/if}
+  <TrainingMapPanel 
+    {trainingStarted}
+    {trainingPaused}
+    {trainingStats}
+    {mapContainer}
+    {initializeMap}
+  />
+  
+  <TrainingTabBarSection 
+    {trainingStarted}
+    {handleStartTraining}
+    {handleTabChange}
+    {handlePauseTraining}
+    {handleFinishTraining}
+  />
 </div>
 
-<!-- Workout Summary Modal -->
-<WorkoutSummaryModal 
-  isVisible={showSummaryModal} 
-  workoutData={finalWorkoutData}
-  onClose={handleModalClose}
-  onSave={handleModalSave}
+<WorkoutSummary 
+  {showSummaryModal}
+  {finalWorkoutData}
+  {handleModalClose}
+  {handleModalSave}
 />
 
 <style>
-  .training-container {
+  .training-main-container {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     width: 100%;
     padding: 1.25rem 0;
     margin-top: 80px; /* Space for fixed header - matching other pages */
-  }
-
-  /* Glass panel effect - consistent with app styling */
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.12); /* Increased opacity for thicker appearance */
-    backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
-    -webkit-backdrop-filter: blur(15px); /* Increased blur for thicker glass effect */
-    border: 0.125rem solid rgba(255, 255, 255, 0.25); /* Thicker border */
-    border-radius: 1.5rem; /* Slightly increased radius */
-    padding: 1.5rem; /* Increased padding */
-    box-shadow: 
-      0 0.75rem 3rem rgba(0, 0, 0, 0.3), /* Enhanced shadow */
-      inset 0 0 2rem rgba(255, 255, 255, 0.2), /* Inner glow for thickness */
-      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15), /* Bottom inner light */
-      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2); /* Top inner light */
-    position: relative;
-    z-index: 10;
-    overflow: hidden;
-  }
-
-  /* Combined Workout Info and Timeline Panel */
-  .workout-info-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 0.125rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    box-shadow: 
-      0 0.75rem 3rem rgba(0, 0, 0, 0.3),
-      inset 0 0 2rem rgba(255, 255, 255, 0.2),
-      inset 0 -0.25rem 0.5rem rgba(255, 255, 255, 0.15),
-      inset 0 0.25rem 0.5rem rgba(255, 255, 255, 0.2);
-    position: relative;
-    z-index: 10;
-    overflow: hidden;
-  }
-
-  .workout-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .workout-title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: white;
-  }
-
-  .workout-duration {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-  }
-
-  .timeline-section {
-    padding: 0;
-  }
-
-  /* Map Panel */
-  .map-panel {
-    height: 70vh; /* Reduced height as per user preference */
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Training Stats Grid */
-  .training-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .stat-item {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    text-align: center;
-    backdrop-filter: blur(5px);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.15);
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 0.25rem;
-  }
-
-  .stat-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: white;
-  }
-
-  .map-container {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    border-radius: 1.5rem;
-    overflow: hidden;
-    margin-bottom: 1rem; /* Space for buttons */
-  }
-
-  /* Control Buttons at Bottom of Map */
-  .control-buttons {
-    gap: 0.75rem;
-  }
-
-  .control-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 50%; /* Make buttons circular */
-    color: rgba(255, 255, 255, 0.9);
-    padding: 0; /* Remove padding for circular shape */
-    font-size: 1.5rem; /* Increase font size for better symbol visibility */
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 
-      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
-      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-    width: 50px; /* Fixed width for circular shape */
-    height: 50px; /* Fixed height for circular shape */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transform-origin: center;
-  }
-
-  /* Progress circle around start button */
-  .progress-circle {
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    width: 60px;
-    height: 60px;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    transform: rotate(-90deg);
-  }
-
-  .control-button:active .progress-circle,
-  .control-button:hover .progress-circle {
-    opacity: 1;
-  }
-
-  /* Style for button icons */
-  .button-icon {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
-    transition: transform 0.1s ease;
-    z-index: 1;
-  }
-
-  .control-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-
-  .control-button:active {
-    transform: translateY(0);
-  }
-
-  .start-button {
-    background: linear-gradient(90deg, #41B6E6, #34C759);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .start-button:hover {
-    background: linear-gradient(90deg, #41B6E6, #34C759); /* Maintain original gradient */
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .resume-button {
-    background: linear-gradient(90deg, #41B6E6, #34C759);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .resume-button:hover {
-    background: linear-gradient(90deg, #41B6E6, #34C759); /* Maintain original gradient */
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .pause-button {
-    background: linear-gradient(90deg, #41B6E6, #FF9500);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .pause-button:hover {
-    background: linear-gradient(90deg, #41B6E6, #FF9500); /* Maintain original gradient */
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .finish-button {
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .finish-button:hover {
-    background: linear-gradient(90deg, #41B6E6, #db3eb1); /* Maintain original gradient */
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-  }
-
-  .section-title {
-    margin: 0 0 1.25rem 0;
-    font-size: 1.3rem;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .exercises-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  
-  .exercise-card {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .exercise-card:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .exercise-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-    flex-shrink: 0;
-  }
-
-  .exercise-icon img {
-    width: 1.5rem;
-    height: 1.5rem;
-    object-fit: contain;
-  }
-
-  .exercise-info {
-    flex: 1;
-  }
-
-  .exercise-name {
-    margin: 0 0 0.25rem 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: white;
-  }
-
-  .exercise-details {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .exercise-calories {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .exercise-duration {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .exercise-intensity {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  
-  .intensity-indicator {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-  }
-
-  .exercise-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .action-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 50%;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .action-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-  }
-
-  .checkbox-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
-    border: 0.125rem solid rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .checkbox-container.checked {
-    background: #34C759;
-    border-color: #34C759;
-  }
-
-  .checkbox-container.checked::after {
-    content: '✓';
-    color: white;
-    font-size: 0.75rem;
-    font-weight: bold;
+    z-index: 15;
   }
 
   /* Responsive design */
   @media (max-width: 48rem) { /* 768px */
-    .training-container {
+    .training-main-container {
       padding: 1rem 0;
       gap: 1rem;
-    }
-
-    .glass-panel {
-      padding: 1.25rem;
-    }
-
-    .training-stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .workout-results {
-      grid-template-columns: 1fr;
     }
   }
 
   @media (max-width: 30rem) { /* 480px */
-    .training-container {
+    .training-main-container {
       padding: 0.75rem 0;
       gap: 0.75rem;
-    }
-
-    .workout-title {
-      font-size: 1.25rem;
-    }
-
-    .workout-duration {
-      font-size: 0.875rem;
-      padding: 0.25rem 0.5rem;
-    }
-
-    .training-stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .stat-item {
-      padding: 0.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.7rem;
-    }
-
-    .stat-value {
-      font-size: 0.9rem;
-    }
-
-    .control-buttons {
-      gap: 0.75rem;
-    }
-
-    .control-button {
-      width: 50px;
-      height: 50px;
-    }
-
-    .progress-circle {
-      width: 60px;
-      height: 60px;
-    }
-
-    .modal-content {
-      padding: 1.5rem;
-    }
-
-    .workout-results {
-      gap: 0.75rem;
-    }
-
-    .result-item {
-      padding: 0.75rem;
-    }
-
-    .result-label {
-      font-size: 0.7rem;
-    }
-
-    .result-value {
-      font-size: 1rem;
-    }
-
-    .modal-actions {
-      flex-direction: column;
     }
   }
 </style>

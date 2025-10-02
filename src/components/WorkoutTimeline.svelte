@@ -88,24 +88,24 @@
   });
 </script>
 
-<div class={`workout-timeline ${className}`}>
-  <div class="timeline-container">
+<div class={`workout-timeline training-workout-timeline ${className}`}>
+  <div class="timeline-container training-timeline-container">
     {#if processedSegments.length > 0}
-      <div class="timeline-bar">
+      <div class="timeline-bar training-timeline-bar">
         {#each processedSegments as segment, i}
           {#if segment.isGap}
             <div 
-              class="segment-gap"
+              class="segment-gap training-segment-gap"
               style={`flex: ${segment.duration};`}
             ></div>
           {:else}
             <div 
-              class="segment"
+              class="segment training-segment"
               style={`flex: ${segment.duration}; background-color: ${segment.color};`}
               title={`${segment.name}: ${segment.duration} мин${segment.avgSpeed ? ` (Ср. скорость: ${segment.avgSpeed} км/ч)` : ''}`}
             >
               {#if showAvgSpeeds && segment.avgSpeed}
-                <div class="segment-avg-speed">
+                <div class="segment-avg-speed training-segment-avg-speed">
                   {segment.avgSpeed} км/ч
                 </div>
               {/if}
@@ -114,34 +114,36 @@
         {/each}
         <!-- Add the timeline marker -->
         {#if currentTime > 0 && markerPosition > 0}
-          <div class="timeline-marker" style={`left: ${markerPosition}%`}></div>
+          <div class="timeline-marker training-timeline-marker" style={`left: ${markerPosition}%`}></div>
         {/if}
       </div>
       
-      <div class="timeline-info">
-        <span class="duration-start">0:00</span>
-        <span class="duration-end">{displayTotalDuration} мин</span>
+      <div class="timeline-info training-timeline-info">
+        <span class="duration-start training-duration-start">0:00</span>
+        <span class="duration-end training-duration-end">{displayTotalDuration} мин</span>
       </div>
     {:else}
-      <div class="no-segments">Нет данных о сегментах тренировки</div>
+      <div class="no-segments training-no-segments">Нет данных о сегментах тренировки</div>
     {/if}
   </div>
 </div>
 
 <style>
-  .workout-timeline {
+  .training-workout-timeline {
     width: 100%;
     margin: 1rem 0;
     position: relative;
+    z-index: 15;
   }
 
-  .timeline-container {
+  .training-timeline-container {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    z-index: 16;
   }
 
-  .timeline-bar {
+  .training-timeline-bar {
     display: flex;
     height: 30px;
     border-radius: 8px;
@@ -149,9 +151,10 @@
     background: rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
     position: relative;
+    z-index: 16;
   }
 
-  .segment {
+  .training-segment {
     height: 100%;
     min-width: 5px;
     transition: opacity 0.3s ease;
@@ -159,21 +162,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 17;
   }
 
-  .segment:hover {
+  .training-segment:hover {
     opacity: 0.8;
   }
 
-  .segment-avg-speed {
+  .training-segment-avg-speed {
     font-size: 0.6rem;
     color: white;
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
     font-weight: bold;
-    z-index: 2;
+    z-index: 18;
   }
 
-  .segment-gap {
+  .training-segment-gap {
     height: 100%;
     background: repeating-linear-gradient(
       45deg,
@@ -182,10 +186,11 @@
       transparent 2px,
       transparent 4px
     );
+    z-index: 17;
   }
 
   /* Timeline marker styles */
-  .timeline-marker {
+  .training-timeline-marker {
     position: absolute;
     top: -5px;
     width: 2px; /* Reduced from 4px to 2px (2 times thinner) */
@@ -193,53 +198,55 @@
     background: white;
     border-radius: 1px; /* Adjusted border radius for thinner marker */
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 20;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     transition: left 0.5s ease;
   }
 
-  .timeline-info {
+  .training-timeline-info {
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.7);
     padding: 0 0.25rem;
+    z-index: 17;
   }
 
-  .no-segments {
+  .training-no-segments {
     text-align: center;
     color: rgba(255, 255, 255, 0.5);
     font-style: italic;
     padding: 1rem;
+    z-index: 17;
   }
 
   /* Responsive design */
   @media (max-width: 48rem) {
-    .timeline-bar {
+    .training-timeline-bar {
       height: 25px;
     }
     
-    .segment-avg-speed {
+    .training-segment-avg-speed {
       font-size: 0.5rem;
     }
   }
 
   @media (max-width: 30rem) {
-    .timeline-bar {
+    .training-timeline-bar {
       height: 20px;
     }
     
-    .timeline-info {
+    .training-timeline-info {
       font-size: 0.7rem;
     }
     
-    .timeline-marker {
+    .training-timeline-marker {
       width: 1px; /* Reduced from 3px to 1px for smaller screens */
       height: 30px;
       top: -3px;
     }
     
-    .segment-avg-speed {
+    .training-segment-avg-speed {
       font-size: 0.4rem;
     }
   }

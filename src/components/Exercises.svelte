@@ -1,10 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import Header from './Header.svelte';
-  import WorkoutTimeline from './WorkoutTimeline.svelte'; // Import the new component
+  import ExercisesHeader from './Exercises/ExercisesHeader.svelte';
+  import CategoryFilter from './Exercises/CategoryFilter.svelte';
+  import WorkoutSelection from './Exercises/WorkoutSelection.svelte';
   import { navigationContext } from '../lib/viewTransition.js';
-  import ExercisesTabBar from './ExercisesTabBar.svelte'; // Import the new Exercises TabBar
-  import { setWorkoutSelected } from '../lib/workoutSelectionStore.js'; // Import the workout selection store
+  import { setWorkoutSelected } from '../lib/workoutSelectionStore.js';
 
   // Props using Svelte 5 runes
   const { onBack, onSettings, onTraining } = $props();
@@ -313,25 +313,6 @@
     }
   }
 
-  // Function to handle start training event from ExercisesTabBar
-  function handleStartTraining() {
-    startTraining();
-  }
-  
-  // Function to handle tab change events from ExercisesTabBar
-  function handleTabChange(event) {
-    const { tab } = event.detail;
-    // Dispatch event to parent component to handle navigation
-    if (tab === 'exercises') {
-      // If clicking on exercises tab, do nothing as we're already on this page
-      return;
-    }
-    // For other tabs, call the onSettings function which handles navigation
-    if (onSettings) {
-      onSettings();
-    }
-  }
-  
   // Load favorites from localStorage on component mount
   onMount(() => {
     try {
@@ -354,85 +335,45 @@
       favorites = [];
     }
   });
-
 </script>
 
-<Header title="Выбор тренировки" showSettingsButton={true} onSettings={onSettings} onBack={onBack} />
+<ExercisesHeader 
+  title="Выбор тренировки" 
+  showSettingsButton={true} 
+  {onSettings} 
+  {onBack} 
+  class="exercises-header"
+/>
 
-<div class="exercises-container">
-  <!-- Category Filter -->
-  <div class="glass-panel category-filter">
-    <h2 class="section-title">Выберите категорию тренировки</h2>
-    <div class="category-list">
-      {#each categories as category}
-        <button 
-          class="category-button {selectedCategory === category.id ? 'active' : ''}"
-          on:click={() => selectCategory(category.id)}
-        >
-          {category.name}
-        </button>
-      {/each}
-    </div>
-  </div>
-
-  <!-- Workout Selection -->
-  <div class="glass-panel workout-selection">
-    {#if !selectedCategory}
-      <div class="placeholder">
-        <p>Выберите тренировку</p>
-      </div>
-    {:else}
-      <h2 class="section-title">Выберите программу тренировки</h2>
-      <div class="workout-list">
-        {#each workoutPrograms[selectedCategory] as workout}
-          <div 
-            class="workout-item {selectedWorkout?.id === workout.id ? 'active' : ''}"
-            on:click={() => selectWorkout(workout)}
-          >
-            <!-- Favorite star icon -->
-            <div class="favorite-icon" on:click|stopPropagation={(e) => toggleFavorite(workout.id)}>
-              {#if isFavorite(workout.id)}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
-                </svg>
-              {:else}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
-                </svg>
-              {/if}
-            </div>
-            
-            <div class="workout-header">
-              <h3 class="workout-name">{workout.name}</h3>
-              <span class="workout-duration">{workout.duration}</span>
-            </div>
-            <p class="workout-description">{workout.description}</p>
-            
-            <!-- Workout Timeline Visualization -->
-            <div class="workout-timeline-container">
-              <WorkoutTimeline 
-                segments={getWorkoutSegments(workout.id)} 
-                className="workout-preview-timeline"
-              />
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </div>
-
-
-
+<div class="exercises-container exercises-main-container">
+  <CategoryFilter 
+    {categories}
+    {selectedCategory}
+    {selectCategory}
+    class="exercises-category-filter"
+  />
+  
+  <WorkoutSelection 
+    {selectedCategory}
+    {workoutPrograms}
+    {selectedWorkout}
+    {selectWorkout}
+    {toggleFavorite}
+    {isFavorite}
+    {getWorkoutSegments}
+    class="exercises-workout-selection"
+  />
 </div>
 
 <style>
-  .exercises-container {
+  .exercises-main-container {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     width: 100%;
     padding: 1.25rem 0;
     margin-top: 80px; /* Space for fixed header */
+    z-index: 16;
   }
 
   /* Glass panel effect - consistent with app styling */
@@ -453,195 +394,21 @@
     overflow: hidden;
   }
 
-  .category-filter {
-    padding: 1rem;
+  .exercises-header {
+    z-index: 20;
   }
 
-  .category-list {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+  .exercises-category-filter {
+    z-index: 17;
   }
 
-  .category-button {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(0.3125rem);
-    -webkit-backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.25);
-    border-radius: 1.5rem;
-    color: rgba(255, 255, 255, 0.9);
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 
-      0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
-      inset 0 0.03125rem 0.0625rem rgba(255, 255, 255, 0.2);
-  }
-
-  .category-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-
-  .category-button.active {
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-
-  .section-title {
-    margin: 0 0 1.25rem 0;
-    font-size: 1.3rem;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .workout-selection {
-    min-height: 200px;
-  }
-
-  .placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 150px;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 1.1rem;
-  }
-
-  .workout-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .workout-item {
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    backdrop-filter: blur(0.3125rem);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.9);
-    position: relative;
-    padding-right: 3rem; /* Add extra padding for the star icon */
-  }
-
-  .workout-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .workout-item.active {
-    background: linear-gradient(90deg, #41B6E6, #db3eb1);
-    color: white;
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      0 0.25rem 0.5rem rgba(0, 0, 0, 0.2),
-      inset 0 0.03125rem 0.09375rem rgba(255, 255, 255, 0.3);
-  }
-
-  .workout-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .workout-name {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-
-  .workout-duration {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 1rem;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    flex-shrink: 0; /* Prevent duration from shrinking */
-  }
-
-  .workout-item.active .workout-duration {
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  .workout-description {
-    margin: 0 0 1rem 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .workout-item.active .workout-description {
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  /* Favorite icon styling */
-  .favorite-icon {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    cursor: pointer;
-    z-index: 2;
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Workout Timeline Container */
-  .workout-timeline-container {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    clear: both; /* Clear any floating elements */
-  }
-
-  .workout-preview-timeline {
-    margin: 0;
-  }
-
-  .start-training-button {
-    background: linear-gradient(135deg, #41B6E6, #db3eb1);
-    color: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
-    position: relative;
-    z-index: 100; /* Ensure button is above bubble background */
-  }
-
-  .start-training-button:hover:not(.disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
-  }
-
-  .start-training-button:active:not(.disabled) {
-    transform: translateY(0);
-  }
-
-  .start-training-button.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
+  .exercises-workout-selection {
+    z-index: 16;
   }
 
   /* Responsive design */
   @media (max-width: 48rem) { /* 768px */
-    .exercises-container {
+    .exercises-main-container {
       padding: 1rem 0;
       gap: 1rem;
     }
@@ -649,50 +416,12 @@
     .glass-panel {
       padding: 1.25rem;
     }
-
-    .category-list {
-      flex-direction: column;
-    }
-
-    .workout-item {
-      flex-direction: column;
-      align-items: flex-start;
-      padding-right: 3rem; /* Maintain padding for star icon */
-    }
   }
 
   @media (max-width: 30rem) { /* 480px */
-    .exercises-container {
+    .exercises-main-container {
       padding: 0.75rem 0;
       gap: 0.75rem;
-    }
-
-    .section-title {
-      font-size: 1.1rem;
-    }
-
-    .category-button {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
-    }
-
-    .start-training-button {
-      padding: 0.8rem;
-      font-size: 0.9rem;
-    }
-    
-    .workout-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-    
-    .workout-duration {
-      align-self: flex-start;
-    }
-    
-    .workout-item {
-      padding-right: 3rem; /* Maintain padding for star icon */
     }
   }
 </style>

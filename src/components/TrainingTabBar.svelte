@@ -95,33 +95,33 @@
 </script>
 
 <!-- Training TabBar - always visible on training page -->
-<div class="tab-bar">
-	<div class="tab-group left">
-		<div class="tab-item" on:click={onHomeClick}>
-			<div class="tab-icon">
+<div class="tab-bar training-tab-bar">
+	<div class="tab-group left training-tab-group-left">
+		<div class="tab-item training-tab-item" on:click={onHomeClick}>
+			<div class="tab-icon training-tab-icon">
 				<!-- Home icon -->
-				<img src="/icons/home.png" alt="Home" class="image-icon" />
+				<img src="/icons/home.png" alt="Home" class="image-icon training-image-icon" />
 			</div>
-			<span class="tab-label">Статистика</span>
+			<span class="tab-label training-tab-label">Статистика</span>
 		</div>
-		<div class="tab-item" on:click={onHealthClick}>
-			<div class="tab-icon">
+		<div class="tab-item training-tab-item" on:click={onHealthClick}>
+			<div class="tab-icon training-tab-icon">
 				<!-- Health icon -->
-				<img src="/icons/health.png" alt="Health" class="image-icon health-icon" />
+				<img src="/icons/health.png" alt="Health" class="image-icon training-image-icon health-icon" />
 			</div>
-			<span class="tab-label">Здоровье</span>
+			<span class="tab-label training-tab-label">Здоровье</span>
 		</div>
 	</div>
 	
 	<!-- Central cutout button - starts training with 2-second press visualization -->
-	<div class="central-button-container" 
+	<div class="central-button-container training-central-button-container" 
 	     on:mousedown={handleCentralButtonPressStart}
 	     on:mouseup={handleCentralButtonPressEnd}
 	     on:mouseleave={handleCentralButtonPressEnd}
 	     on:touchstart|preventDefault={handleCentralButtonPressStart}
 	     on:touchend={handleCentralButtonPressEnd}>
 		<!-- Progress circle around central button -->
-		<svg class="central-progress-circle" viewBox="0 0 100 100">
+		<svg class="central-progress-circle training-central-progress-circle" viewBox="0 0 100 100">
 			<circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"></circle>
 			<circle 
 				cx="50" 
@@ -136,37 +136,37 @@
 				style="transition: stroke-dashoffset 0.05s linear;"
 			></circle>
 		</svg>
-		<div class="central-button-cutout"></div>
-		<div class="central-button" bind:this={centralButtonElement}>
-			<div class="central-tab-icon">
+		<div class="central-button-cutout training-central-button-cutout"></div>
+		<div class="central-button training-central-button" bind:this={centralButtonElement}>
+			<div class="central-tab-icon training-central-tab-icon">
 				<!-- Central icon - play icon for starting training -->
-				<img src="/icons/play.png" alt="Start Training" class="central-image-icon" />
+				<img src="/icons/play.png" alt="Start Training" class="central-image-icon training-central-image-icon" />
 			</div>
 		</div>
 	</div>
 	
-	<div class="tab-group right">
+	<div class="tab-group right training-tab-group-right">
 		<!-- Bluetooth devices tab -->
-		<div class="tab-item" on:click={onDevicesClick}>
-			<div class="tab-icon">
+		<div class="tab-item training-tab-item" on:click={onDevicesClick}>
+			<div class="tab-icon training-tab-icon">
 				<!-- Devices icon -->
-				<img src="/icons/Smarts.png" alt="Bluetooth Devices" class="image-icon devices-icon" />
+				<img src="/icons/Smarts.png" alt="Bluetooth Devices" class="image-icon training-image-icon devices-icon" />
 			</div>
-			<span class="tab-label">Устройства</span>
+			<span class="tab-label training-tab-label">Устройства</span>
 		</div>
 		<!-- Updated tab to navigate to profile instead of settings -->
-		<div class="tab-item" on:click={onSettingsClick}>
-			<div class="tab-icon">
+		<div class="tab-item training-tab-item" on:click={onSettingsClick}>
+			<div class="tab-icon training-tab-icon">
 				<!-- Settings icon repurposed for Profile -->
-				<img src="/icons/Profile.png" alt="Profile" class="image-icon profile-icon" />
+				<img src="/icons/Profile.png" alt="Profile" class="image-icon training-image-icon profile-icon" />
 			</div>
-			<span class="tab-label">Профиль</span>
+			<span class="tab-label training-tab-label">Профиль</span>
 		</div>
 	</div>
 </div>
 
 <style>
-	.tab-bar {
+	.training-tab-bar {
 		position: fixed;
 		bottom: 2rem; /* Поднять от нижнего края экрана */
 		left: 50%; /* Центрировать горизонтально */
@@ -191,22 +191,24 @@
 		padding: 5px 20px;
 	}
 	
-	.tab-group {
+	.training-tab-group-left,
+	.training-tab-group-right {
 		display: flex;
 		flex: 1;
 		justify-content: space-around;
+		z-index: 1001;
 	}
 	
-	.tab-group.left {
+	.training-tab-group-left {
 		margin-right: 47px; /* Half of increased central button width */
 	}
 	
-	.tab-group.right {
+	.training-tab-group-right {
 		margin-left: 47px; /* Half of increased central button width */
 	}
 	
 	/* Adjust tab items to make space for central button */
-	.tab-item {
+	.training-tab-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -217,50 +219,56 @@
 		transition: all 0.2s ease;
 		color: rgba(255, 255, 255, 0.7);
 		min-width: 50px;
+		z-index: 1002;
 	}
 	
-	.tab-item:hover {
+	.training-tab-item:hover {
 		color: white;
 		transform: translateY(-2px);
 	}
 	
-	.tab-icon {
+	.training-tab-icon {
 		width: 24px;
 		height: 24px;
 		margin-bottom: 2px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		z-index: 1003;
 	}
 	
-	.tab-label {
+	.training-tab-label {
 		font-size: 12px;
 		font-weight: 500;
+		z-index: 1003;
 	}
 	
-	.image-icon {
+	.training-image-icon {
 		width: 24px;
 		height: 24px;
 		object-fit: contain;
+		z-index: 1003;
 	}
 	
 	/* Independent central icon styling - increased to 48x48 pixels */
-	.central-tab-icon {
+	.training-central-tab-icon {
 		width: 48px;
 		height: 48px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		z-index: 1004;
 	}
 	
-	.central-image-icon {
+	.training-central-image-icon {
 		width: 48px;
 		height: 48px;
 		object-fit: contain;
+		z-index: 1004;
 	}
 	
 	/* Central button container - adjusted to accommodate larger icon */
-	.central-button-container {
+	.training-central-button-container {
 		position: absolute;
 		top: -32px; /* Adjusted position for larger button */
 		left: 50%;
@@ -272,20 +280,20 @@
 	}
 	
 	/* Progress circle around central button */
-	.central-progress-circle {
+	.training-central-progress-circle {
 		position: absolute;
 		top: -5px;
 		left: -5px;
 		width: 104px;
 		height: 104px;
-		z-index: 0;
+		z-index: 1000;
 		transform: rotate(-90deg);
 		opacity: 1;
 		transition: opacity 0.2s ease;
 	}
 	
 	/* Cutout effect - creates the illusion of a hole in the TabBar */
-	.central-button-cutout {
+	.training-central-button-cutout {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -297,11 +305,11 @@
 			inset 0 0 0 5px rgba(255, 255, 255, 0.1),
 			inset 0 0 10px rgba(0, 0, 0, 0.3),
 			0 0 0 2px rgba(255, 255, 255, 0.1);
-		z-index: 1;
+		z-index: 1001;
 	}
 	
 	/* Central button - slightly smaller than cutout to create gap */
-	.central-button {
+	.training-central-button {
 		position: absolute;
 		top: 5px; /* 5px gap from cutout */
 		left: 5px;
@@ -312,7 +320,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 2;
+		z-index: 1002;
 		cursor: pointer;
 		transition: all 0.2s ease;
 		box-shadow: 
@@ -321,14 +329,14 @@
 		transform-origin: center;
 	}
 	
-	.central-button:hover {
+	.training-central-button:hover {
 		transform: translateY(-2px) scale(1.05);
 		box-shadow: 
 			0 6px 15px rgba(0, 0, 0, 0.4),
 			inset 0 2px 2px rgba(255, 255, 255, 0.4);
 	}
 	
-	.central-button:active {
+	.training-central-button:active {
 		transform: translateY(1px) scale(0.95);
 		box-shadow: 
 			0 2px 5px rgba(0, 0, 0, 0.2),
